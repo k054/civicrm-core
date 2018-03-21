@@ -191,6 +191,8 @@ class CRM_Event_Form_Registration extends CRM_Core_Form {
     $this->_lineItem = $this->get('lineItem');
     $this->_isEventFull = $this->get('isEventFull');
     $this->_lineItemParticipantsCount = $this->get('lineItemParticipants');
+    $this->applyFilter('__ALL__', 'trim');
+
     if (!is_array($this->_lineItem)) {
       $this->_lineItem = array();
     }
