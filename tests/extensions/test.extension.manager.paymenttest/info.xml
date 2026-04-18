@@ -19,4 +19,8 @@
     <isRecur>0</isRecur>
     <paymentType>1</paymentType>
   </typeInfo>
+  <tags>
+    <tag>mgmt:hidden</tag>
+    <tag>mock</tag>
+  </tags>
 </extension>

@@ -1,58 +1,28 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.7                                                |
- +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2016                                |
- +--------------------------------------------------------------------+
- | This file is a part of CiviCRM.                                    |
+ | Copyright CiviCRM LLC. All rights reserved.                        |
  |                                                                    |
- | CiviCRM is free software; you can copy, modify, and distribute it  |
- | under the terms of the GNU Affero General Public License           |
- | Version 3, 19 November 2007 and the CiviCRM Licensing Exception.   |
- |                                                                    |
- | CiviCRM is distributed in the hope that it will be useful, but     |
- | WITHOUT ANY WARRANTY; without even the implied warranty of         |
- | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.               |
- | See the GNU Affero General Public License for more details.        |
- |                                                                    |
- | You should have received a copy of the GNU Affero General Public   |
- | License and the CiviCRM Licensing Exception along                  |
- | with this program; if not, contact CiviCRM LLC                     |
- | at info[AT]civicrm[DOT]org. If you have questions about the        |
- | GNU Affero General Public License or the licensing of CiviCRM,     |
- | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
+ | This work is published under the GNU AGPLv3 license with some      |
+ | permitted exceptions and without any warranty. For full license    |
+ | and copyright information, see https://civicrm.org/licensing       |
  +--------------------------------------------------------------------+
  */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2016
- * $Id$
- *
+ * @copyright CiviCRM LLC https://civicrm.org/licensing
  */
 class CRM_Report_Form_Contact_LoggingDetail extends CRM_Logging_ReportDetail {
+
   /**
    */
   public function __construct() {
-    $logging = new CRM_Logging_Schema();
-    $this->tables[] = 'civicrm_contact';
-    $this->tables = array_merge($this->tables, array_keys($logging->customDataLogTables()));
-    $this->tables[] = 'civicrm_email';
-    $this->tables[] = 'civicrm_phone';
-    $this->tables[] = 'civicrm_im';
-    $this->tables[] = 'civicrm_openid';
-    $this->tables[] = 'civicrm_website';
-    $this->tables[] = 'civicrm_address';
-    $this->tables[] = 'civicrm_note';
-    $this->tables[] = 'civicrm_relationship';
-    $this->tables[] = 'civicrm_activity';
-    $this->tables[] = 'civicrm_case';
-
-    // allow tables to be extended by report hook query objects
-    CRM_Report_BAO_Hook::singleton()->alterLogTables($this, $this->tables);
-
+    $this->log_conn_id = CRM_Utils_Request::retrieve('log_conn_id', 'String');
+    $this->log_date = CRM_Utils_Request::retrieve('log_date', 'String');
+    $this->setTablesToContactRelatedTables();
+    $this->calculateContactDiffs();
     $this->detail = 'logging/contact/detail';
     $this->summary = 'logging/contact/summary';
 
@@ -68,7 +38,7 @@ class CRM_Report_Form_Contact_LoggingDetail extends CRM_Logging_ReportDetail {
     if ($this->cid) {
       // link back to contact summary
       $this->assign('backURL', CRM_Utils_System::url('civicrm/contact/view', "reset=1&selectedChild=log&cid={$this->cid}", FALSE, NULL, FALSE));
-      $this->assign('revertURL', self::$_template->get_template_vars('revertURL') . "&cid={$this->cid}");
+      $this->assign('revertURL', self::$_template->getTemplateVars('revertURL') . "&cid={$this->cid}");
     }
     else {
       // link back to summary report

@@ -1,45 +1,27 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.7                                                |
- +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2016                                |
- +--------------------------------------------------------------------+
- | This file is a part of CiviCRM.                                    |
+ | Copyright CiviCRM LLC. All rights reserved.                        |
  |                                                                    |
- | CiviCRM is free software; you can copy, modify, and distribute it  |
- | under the terms of the GNU Affero General Public License           |
- | Version 3, 19 November 2007 and the CiviCRM Licensing Exception.   |
- |                                                                    |
- | CiviCRM is distributed in the hope that it will be useful, but     |
- | WITHOUT ANY WARRANTY; without even the implied warranty of         |
- | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.               |
- | See the GNU Affero General Public License for more details.        |
- |                                                                    |
- | You should have received a copy of the GNU Affero General Public   |
- | License and the CiviCRM Licensing Exception along                  |
- | with this program; if not, contact CiviCRM LLC                     |
- | at info[AT]civicrm[DOT]org. If you have questions about the        |
- | GNU Affero General Public License or the licensing of CiviCRM,     |
- | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
+ | This work is published under the GNU AGPLv3 license with some      |
+ | permitted exceptions and without any warranty. For full license    |
+ | and copyright information, see https://civicrm.org/licensing       |
  +--------------------------------------------------------------------+
  */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2016
- * $Id$
- *
+ * @copyright CiviCRM LLC https://civicrm.org/licensing
  */
 /*
  * Settings metadata file
  */
 
-return array(
-  'customTranslateFunction' => array(
+return [
+  'customTranslateFunction' => [
     'add' => '4.7',
-    'help_text' => NULL,
+    'help_text' => ts('You may override the ts() function in CiviCRM by defining your own translation function.'),
     'is_domain' => 1,
     'is_contact' => 0,
     'group_name' => 'Localization Preferences',
@@ -48,51 +30,50 @@ return array(
     'type' => 'String',
     'quick_form_type' => 'Element',
     'html_type' => 'text',
-    'html_attributes' => array(
+    'html_attributes' => [
       'size' => '30',
       'maxlength' => '100',
-    ),
+    ],
     'default' => NULL,
-    'title' => 'Custom Translate Function',
-    'description' => '',
-  ),
-  'monetaryThousandSeparator' => array(
+    'title' => ts('Custom Translate Function'),
+    'validate_callback' => ['CRM_Core_BAO_Setting', 'validateCustomTranslateFunction'],
+    'settings_pages' => ['localization' => ['section' => 'advanced', 'weight' => 110]],
+  ],
+  'monetaryThousandSeparator' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'monetaryThousandSeparator',
     'type' => 'String',
     'quick_form_type' => 'Element',
     'html_type' => 'text',
-    'html_attributes' => array(
+    'html_attributes' => [
       'size' => 2,
-    ),
+    ],
     'default' => ',',
     'add' => '4.3',
-    'title' => 'Thousands Separator',
+    'title' => ts('Thousands Separator'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => NULL,
-    'help_text' => NULL,
-  ),
-  'monetaryDecimalPoint' => array(
+    'settings_pages' => ['localization' => ['section' => 'legacy', 'weight' => 80]],
+  ],
+  'monetaryDecimalPoint' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'monetaryDecimalPoint',
     'type' => 'String',
     'quick_form_type' => 'Element',
     'html_type' => 'text',
-    'html_attributes' => array(
+    'html_attributes' => [
       'size' => 2,
-    ),
+    ],
     'default' => '.',
     'add' => '4.3',
-    'title' => 'Decimal Delimiter',
+    'title' => ts('Decimal Delimiter'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => NULL,
-    'help_text' => NULL,
-  ),
-  'moneyformat' => array(
+    'settings_pages' => ['localization' => ['section' => 'legacy', 'weight' => 90]],
+  ],
+  'moneyformat' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'moneyformat',
@@ -101,13 +82,12 @@ return array(
     'html_type' => 'text',
     'default' => '%c %a',
     'add' => '4.3',
-    'title' => 'Monetary Amount Display',
+    'title' => ts('Monetary Amount Display'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => NULL,
-    'help_text' => NULL,
-  ),
-  'moneyvalueformat' => array(
+    'settings_pages' => ['localization' => ['section' => 'legacy', 'weight' => 100]],
+  ],
+  'moneyvalueformat' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'moneyvalueformat',
@@ -116,57 +96,58 @@ return array(
     'html_type' => 'text',
     'default' => '%!i',
     'add' => '4.3',
-    'title' => 'Monetary Value Display',
+    'title' => ts('Monetary Value Display'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => NULL,
     'help_text' => NULL,
-  ),
-  'defaultCurrency' => array(
+  ],
+  'defaultCurrency' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'defaultCurrency',
     'type' => 'String',
     'quick_form_type' => 'Select',
     'html_type' => 'Select',
-    'html_attributes' => array(
+    'html_attributes' => [
       'class' => 'crm-select2',
-    ),
+    ],
     'default' => 'USD',
     'add' => '4.3',
-    'title' => 'Default Currency',
+    'title' => ts('Default Currency'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => 'Default currency assigned to contributions and other monetary transactions.',
-    'help_text' => NULL,
-    'pseudoconstant' => array(
+    'help_text' => ts('Default currency assigned to contributions and other monetary transactions.'),
+    'pseudoconstant' => [
       'callback' => 'CRM_Admin_Form_Setting_Localization::getCurrencySymbols',
-    ),
-  ),
-  'defaultContactCountry' => array(
+    ],
+    'on_change' => [
+      'CRM_Admin_Form_Setting_Localization::onChangeDefaultCurrency',
+    ],
+    'settings_pages' => ['localization' => ['section' => 'language', 'weight' => 60]],
+  ],
+  'defaultContactCountry' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'defaultContactCountry',
     'type' => 'String',
     'quick_form_type' => 'Select',
     'html_type' => 'Select',
-    'html_attributes' => array(
+    'html_attributes' => [
       //'class' => 'crm-select2',
-    ),
-    'default' => '1228',
+    ],
     'add' => '4.4',
-    'title' => 'Default Country',
+    'title' => ts('Default Country'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => 'This value is selected by default when adding a new contact address.',
-    'help_text' => NULL,
-    'pseudoconstant' => array(
+    'is_required' => FALSE,
+    'help_text' => ts('This value is selected by default when adding a new contact address.'),
+    'pseudoconstant' => [
       'callback' => 'CRM_Admin_Form_Setting_Localization::getAvailableCountries',
-    ),
-  ),
-  'defaultContactStateProvince' => array(
+    ],
+    'settings_pages' => ['localization' => ['section' => 'address', 'weight' => 10]],
+  ],
+  'defaultContactStateProvince' => [
     'add' => '4.7',
-    'help_text' => NULL,
     'is_domain' => 1,
     'is_contact' => 0,
     'group_name' => 'Localization Preferences',
@@ -175,73 +156,77 @@ return array(
     'type' => 'Integer',
     'quick_form_type' => 'ChainSelect',
     'html_type' => 'ChainSelect',
+    'chain_select_settings' => [
+      'control_field' => 'defaultContactCountry',
+    ],
     //'pseudoconstant' => array(
     //  'callback' => 'CRM_Core_PseudoConstant::stateProvince',
     //),
-    //'html_attributes',
     'default' => NULL,
-    'title' => 'Default State/Province',
-    'description' => 'This value is selected by default when adding a new contact address.',
-  ),
-  'countryLimit' => array(
+    'title' => ts('Default State/Province'),
+    'help_text' => ts('This value is selected by default when adding a new contact address.'),
+    'settings_pages' => ['localization' => ['section' => 'address', 'weight' => 20]],
+  ],
+  'countryLimit' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'countryLimit',
     'type' => 'Array',
     'quick_form_type' => 'Select',
     'html_type' => 'Select',
-    'html_attributes' => array(
+    'html_attributes' => [
       'multiple' => 1,
-      'class' => 'crm-select2',
-    ),
-    'default' => array('1228'),
+      'class' => 'huge crm-select2',
+    ],
+    'default' => [],
     'add' => '4.3',
-    'title' => 'Available Countries',
+    'title' => ts('Available Countries'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => '',
-    'help_text' => NULL,
-    'pseudoconstant' => array(
+    'help_text' => ts("Which countries are available in the Country selection field when adding or editing contact addresses. Profile and Custom 'Country' fields also use this setting. To include ALL countries, leave the right-hand box empty."),
+    'pseudoconstant' => [
       'callback' => 'CRM_Admin_Form_Setting_Localization::getAvailableCountries',
-    ),
-  ),
-  'provinceLimit' => array(
+    ],
+    'settings_pages' => ['localization' => ['section' => 'address', 'weight' => 30]],
+  ],
+  'provinceLimit' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'provinceLimit',
     'type' => 'Array',
     'quick_form_type' => 'Select',
     'html_type' => 'Select',
-    'html_attributes' => array(
+    'html_attributes' => [
       'multiple' => 1,
-      'class' => 'crm-select2',
-    ),
-    'default' => array('1228'),
+      'class' => 'huge crm-select2',
+    ],
+    'default' => [],
     'add' => '4.3',
-    'title' => 'Available States and Provinces',
+    'title' => ts('Available States and Provinces (by Country)'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => '',
-    'help_text' => NULL,
-    'pseudoconstant' => array(
+    'help_text' => ts("State/province listings are populated dynamically based on the selected Country for all standard contact address editing forms, as well as for Profile forms which include both a Country and a State/Province field.  This setting controls which countries' states and/or provinces are available in the State/Province selection field for Custom Fields, or for Profile forms which do NOT include a Country field."),
+    'pseudoconstant' => [
       'callback' => 'CRM_Admin_Form_Setting_Localization::getAvailableCountries',
-    ),
-  ),
-  'inheritLocale' => array(
+    ],
+    'settings_pages' => ['localization' => ['section' => 'address', 'weight' => 50]],
+  ],
+  'inheritLocale' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'inheritLocale',
     'type' => 'Boolean',
-    'quick_form_type' => 'YesNo',
+    'html_type' => 'toggle',
     'default' => '0',
     'add' => '4.3',
-    'title' => 'Inherit CMS Language',
+    'title' => ts('Inherit CMS Language'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => '',
-    'help_text' => NULL,
-  ),
-  'dateformatDatetime' => array(
+    'help_text' => ts('If Yes, the initial session language will be set by the CMS, which can later be changed if using the CiviCRM language switcher.'),
+    'metadata_callback' => ['CRM_Admin_Form_Setting_Localization', 'toggleMultilingualDependentSettings'],
+    'settings_pages' => ['localization' => ['section' => 'language', 'weight' => 20]],
+  ],
+  'dateformatDatetime' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'dateformatDatetime',
@@ -250,13 +235,12 @@ return array(
     'html_type' => 'text',
     'default' => '%B %E%f, %Y %l:%M %P',
     'add' => '4.3',
-    'title' => 'Date Format: Complete Date and Time',
+    'title' => ts('Date Format: Complete Date and Time'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => '',
-    'help_text' => NULL,
-  ),
-  'dateformatFull' => array(
+    'settings_pages' => ['date' => ['section' => 'display', 'weight' => 0]],
+  ],
+  'dateformatFull' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'dateformatFull',
@@ -265,13 +249,12 @@ return array(
     'html_type' => 'text',
     'default' => '%B %E%f, %Y',
     'add' => '4.3',
-    'title' => 'Date Format: Complete Date',
+    'title' => ts('Date Format: Complete Date'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => '',
-    'help_text' => NULL,
-  ),
-  'dateformatPartial' => array(
+    'settings_pages' => ['date' => ['section' => 'display', 'weight' => 10]],
+  ],
+  'dateformatPartial' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'dateformatPartial',
@@ -280,15 +263,13 @@ return array(
     'html_type' => 'text',
     'default' => '%B %Y',
     'add' => '4.3',
-    'title' => 'Date Format: Month and Year',
+    'title' => ts('Date Format: Month and Year'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => '',
-    'help_text' => NULL,
-  ),
-  'dateformatTime' => array(
+    'settings_pages' => ['date' => ['section' => 'display', 'weight' => 20]],
+  ],
+  'dateformatTime' => [
     'add' => '4.7',
-    'help_text' => NULL,
     'is_domain' => 1,
     'is_contact' => 0,
     'group_name' => 'Localization Preferences',
@@ -297,17 +278,16 @@ return array(
     'type' => 'String',
     'quick_form_type' => 'Element',
     'html_type' => 'text',
-    'html_attributes' => array(
+    'html_attributes' => [
       'size' => '12',
       'maxlength' => '60',
-    ),
+    ],
     'default' => '%l:%M %P',
-    'title' => 'Date Format: Time Only',
-    'description' => '',
-  ),
-  'dateformatYear' => array(
+    'title' => ts('Date Format: Time Only'),
+    'settings_pages' => ['date' => ['section' => 'display', 'weight' => 40]],
+  ],
+  'dateformatYear' => [
     'add' => '4.7',
-    'help_text' => NULL,
     'is_domain' => 1,
     'is_contact' => 0,
     'group_name' => 'Localization Preferences',
@@ -316,17 +296,52 @@ return array(
     'type' => 'String',
     'quick_form_type' => 'Element',
     'html_type' => 'text',
-    'html_attributes' => array(
+    'html_attributes' => [
       'size' => '12',
       'maxlength' => '60',
-    ),
+    ],
     'default' => '%Y',
-    'title' => 'Date Format: Year Only',
-    'description' => '',
-  ),
-  'dateInputFormat' => array(
+    'title' => ts('Date Format: Year Only'),
+    'settings_pages' => ['date' => ['section' => 'display', 'weight' => 30]],
+  ],
+  'dateformatFinancialBatch' => [
     'add' => '4.7',
-    'help_text' => NULL,
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'group_name' => 'Localization Preferences',
+    'group' => 'localization',
+    'name' => 'dateformatFinancialBatch',
+    'type' => 'String',
+    'quick_form_type' => 'Element',
+    'html_type' => 'text',
+    'html_attributes' => [
+      'size' => '12',
+      'maxlength' => '60',
+    ],
+    'default' => '%m/%d/%Y',
+    'title' => ts('Date Format: Financial Batch'),
+    'settings_pages' => ['date' => ['section' => 'display', 'weight' => 50]],
+  ],
+  'dateformatshortdate' => [
+    'add' => '4.7',
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'group_name' => 'Localization Preferences',
+    'group' => 'localization',
+    'name' => 'dateformatshortdate',
+    'type' => 'String',
+    'quick_form_type' => 'Element',
+    'html_type' => 'text',
+    'html_attributes' => [
+      'size' => '12',
+      'maxlength' => '60',
+    ],
+    'default' => '%m/%d/%Y',
+    'title' => ts('Date Format: Short date Month Day Year'),
+    'settings_pages' => ['date' => ['section' => 'display', 'weight' => 60]],
+  ],
+  'dateInputFormat' => [
+    'add' => '4.7',
     'is_domain' => 1,
     'is_contact' => 0,
     'group_name' => 'Localization Preferences',
@@ -335,16 +350,15 @@ return array(
     'type' => 'String',
     'quick_form_type' => 'Select',
     'html_type' => 'Select',
-    'pseudoconstant' => array(
+    'pseudoconstant' => [
       'callback' => 'CRM_Core_SelectValues::getDatePluginInputFormats',
-    ),
+    ],
     'default' => 'mm/dd/yy',
-    'title' => 'Date Input Format',
-    'description' => '',
-  ),
-  'fieldSeparator' => array(
+    'title' => ts('Date Input Format'),
+    'settings_pages' => ['date' => ['section' => 'input', 'weight' => 10]],
+  ],
+  'fieldSeparator' => [
     'add' => '4.7',
-    'help_text' => NULL,
     'is_domain' => 1,
     'is_contact' => 0,
     'group_name' => 'Localization Preferences',
@@ -353,17 +367,17 @@ return array(
     'type' => 'String',
     'quick_form_type' => 'Element',
     'html_type' => 'text',
-    'html_attributes' => array(
+    'html_attributes' => [
       'size' => '2',
       'maxlength' => '8',
-    ),
+    ],
     'default' => ',',
-    'title' => 'Import / Export Field Separator',
-    'description' => 'Global CSV separator character. Modify this setting to enable import and export of different kinds of CSV files (for example: \',\' \';\' \':\' \'|\' ).',
-  ),
-  'fiscalYearStart' => array(
+    'title' => ts('Import / Export Field Separator'),
+    'help_text' => ts('Global CSV separator character. Modify this setting to enable import and export of different kinds of CSV files (for example: \',\' \';\' \':\' \'|\' ).'),
+    'settings_pages' => ['localization' => ['section' => 'advanced', 'weight' => 130]],
+  ],
+  'fiscalYearStart' => [
     'add' => '4.7',
-    'help_text' => NULL,
     'is_domain' => 1,
     'is_contact' => 0,
     'group_name' => 'Localization Preferences',
@@ -372,59 +386,116 @@ return array(
     'type' => 'Array',
     'quick_form_type' => 'MonthDay',
     'html_type' => 'MonthDay',
-    'default' => array('M' => 1, 'd' => 1),
-    'title' => 'Fiscal Year Start',
-    'description' => '',
-  ),
-  'languageLimit' => array(
+    'default' => ['M' => 1, 'd' => 1],
+    'title' => ts('Fiscal Year Start'),
+    'settings_pages' => ['date' => ['section' => 'calendar', 'weight' => 20]],
+  ],
+  'languageLimit' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'languageLimit',
     'type' => 'Array',
     'quick_form_type' => 'Select',
     'html_type' => 'Select',
-    'html_attributes' => array(
+    'html_attributes' => [
       'multiple' => 1,
       'class' => 'crm-select2',
-    ),
+    ],
     'default' => NULL,
     'add' => '4.3',
-    'title' => 'Available Languages (Multi-lingual)',
+    'title' => ts('Available Languages (Multi-lingual)'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => '',
-    'help_text' => NULL,
-    'pseudoconstant' => array(
+    'help_text' => ts('Languages available to users of this installation.'),
+    'pseudoconstant' => [
       'callback' => 'CRM_Core_I18n::languages',
-    ),
-  ),
-  'lcMessages' => array(
+    ],
+    'metadata_callback' => ['CRM_Admin_Form_Setting_Localization', 'toggleMultilingualDependentSettings'],
+    'settings_pages' => ['localization' => ['section' => 'language', 'weight' => 10]],
+  ],
+  'partial_locales' => [
+    'group_name' => 'Localization Preferences',
+    'group' => 'localization',
+    'name' => 'partial_locales',
+    'type' => 'Boolean',
+    'html_type' => 'toggle',
+    'default' => '1',
+    'add' => '5.54',
+    'title' => ts('Partial Locales'),
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'help_text' => ts('If Yes, the system will allow processing data in locales which are not fully supported. (Some tokens or resources may unavailable or substituted from other locales.)'),
+    'settings_pages' => ['localization' => ['section' => 'language', 'weight' => 50]],
+  ],
+  'format_locale' => [
+    'group_name' => 'Localization Preferences',
+    'group' => 'localization',
+    'name' => 'format_locale',
+    'type' => 'String',
+    'quick_form_type' => 'Select',
+    'html_type' => 'Select',
+    'html_attributes' => [
+      'class' => 'crm-select2',
+    ],
+    'default' => NULL,
+    'add' => '5.47',
+    'title' => ts('Formatting locale'),
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'pseudoconstant' => [
+      'callback' => 'CRM_Core_I18n::getFormatLocales',
+    ],
+    'help_text' => ts('Locale to use when formatting money (and in future dates). This replaces thousandsSeparator & decimalSeparator & moneyFormat settings.'),
+    'settings_pages' => ['localization' => ['section' => 'language', 'weight' => 70]],
+  ],
+  'uiLanguages' => [
+    'group_name' => 'Localization Preferences',
+    'group' => 'localization',
+    'name' => 'uiLanguages',
+    'type' => 'Array',
+    'quick_form_type' => 'Select',
+    'html_type' => 'select',
+    'html_attributes' => [
+      'multiple' => 1,
+      'class' => 'crm-select2',
+    ],
+    'default' => NULL,
+    'add' => '5.9',
+    'title' => ts('Available Languages'),
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'help_text' => ts('User Interface languages available to users'),
+    'pseudoconstant' => [
+      'callback' => 'CRM_Core_I18n::languages',
+    ],
+    'metadata_callback' => ['CRM_Admin_Form_Setting_Localization', 'toggleMultilingualDependentSettings'],
+    'settings_pages' => ['localization' => ['section' => 'language', 'weight' => 20]],
+  ],
+  'lcMessages' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'lcMessages',
     'type' => 'String',
     'quick_form_type' => 'Select',
     'html_type' => 'Select',
-    'html_attributes' => array(
+    'html_attributes' => [
       'class' => 'crm-select2',
-    ),
+    ],
     'default' => 'en_US',
     'add' => '4.3',
-    'title' => 'Default Language',
+    'title' => ts('Default Language'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => '',
-    'help_text' => NULL,
-    'pseudoconstant' => array(
+    'pseudoconstant' => [
       'callback' => 'CRM_Admin_Form_Setting_Localization::getDefaultLocaleOptions',
-    ),
-    'on_change' => array(
+    ],
+    'on_change' => [
       'CRM_Admin_Form_Setting_Localization::onChangeLcMessages',
-    ),
-  ),
-  'legacyEncoding' => array(
+    ],
+    'settings_pages' => ['localization' => ['section' => 'language', 'weight' => 0]],
+  ],
+  'legacyEncoding' => [
     'add' => '4.7',
-    'help_text' => NULL,
     'is_domain' => 1,
     'is_contact' => 0,
     'group_name' => 'Localization Preferences',
@@ -433,17 +504,17 @@ return array(
     'type' => 'String',
     'quick_form_type' => 'Element',
     'html_type' => 'text',
-    'html_attributes' => array(
+    'html_attributes' => [
       'size' => '12',
       'maxlength' => '30',
-    ),
+    ],
     'default' => 'Windows-1252',
-    'title' => 'Legacy Encoding',
-    'description' => 'If import files are NOT encoded as UTF-8, specify an alternate character encoding for these files. The default of Windows-1252 will work for Excel-created .CSV files on many computers.',
-  ),
-  'timeInputFormat' => array(
+    'title' => ts('Legacy Encoding'),
+    'help_text' => ts('If import files are NOT encoded as UTF-8, specify an alternate character encoding for these files. The default of Windows-1252 will work for Excel-created .CSV files on many computers.'),
+    'settings_pages' => ['localization' => ['section' => 'advanced', 'weight' => 120]],
+  ],
+  'timeInputFormat' => [
     'add' => '4.7',
-    'help_text' => NULL,
     'is_domain' => 1,
     'is_contact' => 0,
     'group_name' => 'Localization Preferences',
@@ -452,54 +523,91 @@ return array(
     'type' => 'String',
     'quick_form_type' => 'Select',
     'html_type' => 'Select',
-    'pseudoconstant' => array(
+    'pseudoconstant' => [
       'callback' => 'CRM_Core_SelectValues::getTimeFormats',
-    ),
+    ],
     'default' => '1',
-    'title' => 'Time Input Format',
-    'description' => '',
-    'on_change' => array(
+    'title' => ts('Time Input Format'),
+    'on_change' => [
       'CRM_Core_BAO_PreferencesDate::onChangeSetting',
-    ),
-  ),
-  'weekBegins' => array(
+    ],
+    'settings_pages' => ['date' => ['section' => 'input', 'weight' => 20]],
+  ],
+  'weekBegins' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'weekBegins',
     'type' => 'String',
     'quick_form_type' => 'Select',
     'html_type' => 'Select',
-    'pseudoconstant' => array(
+    'pseudoconstant' => [
       'callback' => 'CRM_Utils_Date::getFullWeekdayNames',
-    ),
+    ],
     'default' => '0',
     'add' => '4.7',
-    'title' => 'Week begins on',
+    'title' => ts('Week begins on'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => "",
-    'help_text' => NULL,
-  ),
-  'contact_default_language' => array(
+    'settings_pages' => ['date' => ['section' => 'calendar', 'weight' => 10]],
+  ],
+  'contact_default_language' => [
     'group_name' => 'Localization Preferences',
     'group' => 'localization',
     'name' => 'contact_default_language',
     'type' => 'String',
     'quick_form_type' => 'Select',
     'html_type' => 'Select',
-    'html_attributes' => array(
+    'html_attributes' => [
       'class' => 'crm-select2',
-    ),
-    'pseudoconstant' => array(
+    ],
+    'pseudoconstant' => [
       'callback' => 'CRM_Admin_Form_Setting_Localization::getDefaultLanguageOptions',
-    ),
+    ],
     'default' => '*default*',
     'add' => '4.7',
-    'title' => 'Default Language for contacts',
+    'title' => ts('Default Language for contacts'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => 'Default language (if any) for contact records',
-    'help_text' => 'If a contact is created with no language this setting will determine the language data (if any) to save.'
-    . 'You may or may not wish to make an assumption here about whether it matches the site language',
-  ),
-);
+    'help_text' => [
+      ts('If a contact is created with no language this setting will determine the language data (if any) to save.'),
+      ts('You may or may not wish to make an assumption here about whether it matches the site language'),
+    ],
+    'settings_pages' => ['localization' => ['section' => 'language', 'weight' => 40]],
+  ],
+  'pinnedContactCountries' => [
+    'group_name' => 'Localization Preferences',
+    'group' => 'localization',
+    'name' => 'pinnedContactCountries',
+    'type' => 'Array',
+    'quick_form_type' => 'Select',
+    'html_type' => 'Select',
+    'html_attributes' => [
+      'multiple' => 1,
+      'class' => 'huge crm-select2',
+    ],
+    'default' => [],
+    'add' => '5.33',
+    'title' => ts('Pinned Countries'),
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'help_text' => ts('Selected countries will appear in top section of country list'),
+    'pseudoconstant' => [
+      'callback' => 'CRM_Admin_Form_Setting_Localization::getAvailableCountries',
+    ],
+    'settings_pages' => ['localization' => ['section' => 'address', 'weight' => 40]],
+  ],
+  'force_translation_source_locale' => [
+    'group_name' => 'Localization Preferences',
+    'group' => 'localization',
+    'name' => 'force_translation_source_locale',
+    'type' => 'Boolean',
+    'html_type' => 'toggle',
+    'default' => '1',
+    'add' => '6.8',
+    'title' => ts('Force source translations to the default language'),
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'help_text' => ts('When enabled, created content (i.e. Forms, Searches, etc.) will save the source translations as originating from your default language. Otherwise, you can choose the base locale for each Form or it defaults to the current users language.'),
+    'settings_pages' => ['localization' => ['section' => 'language', 'weight' => 45]],
+  ],
+];

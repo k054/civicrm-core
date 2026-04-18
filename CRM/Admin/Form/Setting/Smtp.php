@@ -1,179 +1,113 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.7                                                |
- +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2016                                |
- +--------------------------------------------------------------------+
- | This file is a part of CiviCRM.                                    |
+ | Copyright CiviCRM LLC. All rights reserved.                        |
  |                                                                    |
- | CiviCRM is free software; you can copy, modify, and distribute it  |
- | under the terms of the GNU Affero General Public License           |
- | Version 3, 19 November 2007 and the CiviCRM Licensing Exception.   |
- |                                                                    |
- | CiviCRM is distributed in the hope that it will be useful, but     |
- | WITHOUT ANY WARRANTY; without even the implied warranty of         |
- | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.               |
- | See the GNU Affero General Public License for more details.        |
- |                                                                    |
- | You should have received a copy of the GNU Affero General Public   |
- | License and the CiviCRM Licensing Exception along                  |
- | with this program; if not, contact CiviCRM LLC                     |
- | at info[AT]civicrm[DOT]org. If you have questions about the        |
- | GNU Affero General Public License or the licensing of CiviCRM,     |
- | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
+ | This work is published under the GNU AGPLv3 license with some      |
+ | permitted exceptions and without any warranty. For full license    |
+ | and copyright information, see https://civicrm.org/licensing       |
  +--------------------------------------------------------------------+
  */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2016
+ * @copyright CiviCRM LLC https://civicrm.org/licensing
  */
 
 /**
- * This class generates form components for Smtp Server.
+ * This form has not been fully converted to use the Generic settings form,
+ * as the `mailing_backend` setting is complex and must be split into multiple form elements.
  */
-class CRM_Admin_Form_Setting_Smtp extends CRM_Admin_Form_Setting {
+class CRM_Admin_Form_Setting_Smtp extends CRM_Admin_Form_Generic {
   protected $_testButtonName;
+
+  private $subfields = [
+    'outBound_option',
+    'smtpAuth',
+    'smtpPassword',
+    'smtpPort',
+    'smtpServer',
+    'smtpUsername',
+    'sendmail_args',
+    'sendmail_path',
+  ];
+
+  public function preProcess() {
+    parent::preProcess();
+
+    // TODO: Metadata-based sections are prevented by the complex nature of the `mailing_backend` setting
+    // for now, just add a title to the default section.
+    $this->sections = [
+      'default' => [
+        'title' => ts('General'),
+        'icon' => 'fa-envelope',
+      ],
+    ];
+  }
 
   /**
    * Build the form object.
    */
   public function buildQuickForm() {
+    $props = [];
 
-    $outBoundOption = array(
+    $outBoundOption = [
       CRM_Mailing_Config::OUTBOUND_OPTION_MAIL => ts('mail()'),
       CRM_Mailing_Config::OUTBOUND_OPTION_SMTP => ts('SMTP'),
       CRM_Mailing_Config::OUTBOUND_OPTION_SENDMAIL => ts('Sendmail'),
       CRM_Mailing_Config::OUTBOUND_OPTION_DISABLED => ts('Disable Outbound Email'),
       CRM_Mailing_Config::OUTBOUND_OPTION_REDIRECT_TO_DB => ts('Redirect to Database'),
-    );
-    $this->addRadio('outBound_option', ts('Select Mailer'), $outBoundOption);
+    ];
+    $this->addRadio('outBound_option', ts('Select Mailer'), $outBoundOption, $props['outBound_option'] ?? []);
 
-    CRM_Utils_System::setTitle(ts('Settings - Outbound Mail'));
+    $this->setTitle(ts('Settings - Outbound Mail'));
     $this->add('text', 'sendmail_path', ts('Sendmail Path'));
     $this->add('text', 'sendmail_args', ts('Sendmail Argument'));
-    $this->add('text', 'smtpServer', ts('SMTP Server'));
-    $this->add('text', 'smtpPort', ts('SMTP Port'));
-    $this->addYesNo('smtpAuth', ts('Authentication?'));
-    $this->addElement('text', 'smtpUsername', ts('SMTP Username'));
-    $this->addElement('password', 'smtpPassword', ts('SMTP Password'));
+    $this->add('text', 'smtpServer', ts('SMTP Server'), $props['smtpServer'] ?? NULL);
+    $this->add('text', 'smtpPort', ts('SMTP Port'), $props['smtpPort'] ?? NULL);
+    $this->addYesNo('smtpAuth', ts('Authentication?'), empty($props['smtpAuth']['disabled']), FALSE, $props['smtpAuth'] ?? []);
+    $this->addElement('text', 'smtpUsername', ts('SMTP Username'), $props['smtpUsername'] ?? NULL);
+    $this->addElement('password', 'smtpPassword', ts('SMTP Password'), $props['smtpPassword'] ?? NULL);
 
     $this->_testButtonName = $this->getButtonName('refresh', 'test');
 
-    $this->addFormRule(array('CRM_Admin_Form_Setting_Smtp', 'formRule'));
+    if (Civi::settings()->getMandatory('mailing_backend') === NULL) {
+      $this->addFormRule(['CRM_Admin_Form_Setting_Smtp', 'subfieldFormRules']);
+    }
     parent::buildQuickForm();
     $buttons = $this->getElement('buttons')->getElements();
-    $buttons[] = $this->createElement('submit', $this->_testButtonName, ts('Save & Send Test Email'), array('crm-icon' => 'fa-envelope-o'));
+    $buttons[] = $this->createElement(
+      'xbutton',
+      $this->_testButtonName,
+      CRM_Core_Page::crmIcon('fa-envelope-o') . ' ' . ts('Save & Send Test Email'),
+      ['type' => 'submit']
+    );
     $this->getElement('buttons')->setElements($buttons);
   }
 
   /**
    * Process the form submission.
+   *
+   * @throws \Exception
    */
   public function postProcess() {
+    // Parent postProcess will save all settings with the `'settings_pages' => ['smtp'...` metadata
+    parent::postProcess();
     // flush caches so we reload details for future requests
     // CRM-11967
-    CRM_Utils_System::flushCache();
+    Civi::rebuild(['system' => TRUE])->execute();
 
     $formValues = $this->controller->exportValues($this->_name);
+
+    // FIXME: Shouldn't we be unsetting ALL already-processed values? e.g.
+    // $formValues = array_diff_key($formValues, $this->_settings);
+    unset($formValues['allow_mail_from_logged_in_contact']);
 
     $buttonName = $this->controller->getButtonName();
     // check if test button
     if ($buttonName == $this->_testButtonName) {
-      if ($formValues['outBound_option'] == CRM_Mailing_Config::OUTBOUND_OPTION_DISABLED) {
-        CRM_Core_Session::setStatus(ts('You have selected "Disable Outbound Email". A test email can not be sent.'), ts("Email Disabled"), "error");
-      }
-      elseif ($formValues['outBound_option'] == CRM_Mailing_Config::OUTBOUND_OPTION_REDIRECT_TO_DB) {
-        CRM_Core_Session::setStatus(ts('You have selected "Redirect to Database". A test email can not be sent.'), ts("Email Disabled"), "error");
-      }
-      else {
-        $session = CRM_Core_Session::singleton();
-        $userID = $session->get('userID');
-        list($toDisplayName, $toEmail, $toDoNotEmail) = CRM_Contact_BAO_Contact::getContactDetails($userID);
-
-        //get the default domain email address.CRM-4250
-        list($domainEmailName, $domainEmailAddress) = CRM_Core_BAO_Domain::getNameAndEmail();
-
-        if (!$domainEmailAddress || $domainEmailAddress == 'info@EXAMPLE.ORG') {
-          $fixUrl = CRM_Utils_System::url("civicrm/admin/domain", 'action=update&reset=1');
-          CRM_Core_Error::fatal(ts('The site administrator needs to enter a valid \'FROM Email Address\' in <a href="%1">Administer CiviCRM &raquo; Communications &raquo; FROM Email Addresses</a>. The email address used may need to be a valid mail account with your email service provider.', array(1 => $fixUrl)));
-        }
-
-        if (!$toEmail) {
-          CRM_Core_Error::statusBounce(ts('Cannot send a test email because your user record does not have a valid email address.'));
-        }
-
-        if (!trim($toDisplayName)) {
-          $toDisplayName = $toEmail;
-        }
-
-        $to = '"' . $toDisplayName . '"' . "<$toEmail>";
-        $from = '"' . $domainEmailName . '" <' . $domainEmailAddress . '>';
-        $testMailStatusMsg = ts('Sending test email. FROM: %1 TO: %2.<br />', array(
-            1 => $domainEmailAddress,
-            2 => $toEmail,
-          ));
-
-        $params = array();
-        if ($formValues['outBound_option'] == CRM_Mailing_Config::OUTBOUND_OPTION_SMTP) {
-          $subject = "Test for SMTP settings";
-          $message = "SMTP settings are correct.";
-
-          $params['host'] = $formValues['smtpServer'];
-          $params['port'] = $formValues['smtpPort'];
-
-          if ($formValues['smtpAuth']) {
-            $params['username'] = $formValues['smtpUsername'];
-            $params['password'] = $formValues['smtpPassword'];
-            $params['auth'] = TRUE;
-          }
-          else {
-            $params['auth'] = FALSE;
-          }
-
-          // set the localhost value, CRM-3153, CRM-9332
-          $params['localhost'] = $_SERVER['SERVER_NAME'];
-
-          // also set the timeout value, lets set it to 30 seconds
-          // CRM-7510, CRM-9332
-          $params['timeout'] = 30;
-
-          $mailerName = 'smtp';
-        }
-        elseif ($formValues['outBound_option'] == CRM_Mailing_Config::OUTBOUND_OPTION_SENDMAIL) {
-          $subject = "Test for Sendmail settings";
-          $message = "Sendmail settings are correct.";
-          $params['sendmail_path'] = $formValues['sendmail_path'];
-          $params['sendmail_args'] = $formValues['sendmail_args'];
-          $mailerName = 'sendmail';
-        }
-        elseif ($formValues['outBound_option'] == CRM_Mailing_Config::OUTBOUND_OPTION_MAIL) {
-          $subject = "Test for PHP mail settings";
-          $message = "mail settings are correct.";
-          $mailerName = 'mail';
-        }
-
-        $headers = array(
-          'From' => $from,
-          'To' => $to,
-          'Subject' => $subject,
-        );
-
-        $mailer = Mail::factory($mailerName, $params);
-
-        $errorScope = CRM_Core_TemporaryErrorScope::ignoreException();
-        $result = $mailer->send($toEmail, $headers, $message);
-        unset($errorScope);
-        if (!is_a($result, 'PEAR_Error')) {
-          CRM_Core_Session::setStatus($testMailStatusMsg . ts('Your %1 settings are correct. A test email has been sent to your email address.', array(1 => strtoupper($mailerName))), ts("Mail Sent"), "success");
-        }
-        else {
-          $message = CRM_Utils_Mail::errorMessage($mailer, $result);
-          CRM_Core_Session::setStatus($testMailStatusMsg . ts('Oops. Your %1 settings are incorrect. No test mail has been sent.', array(1 => strtoupper($mailerName))) . $message, ts("Mail Not Sent"), "error");
-        }
-      }
+      $this->sendTest($formValues);
     }
 
     $mailingBackend = Civi::settings()->get('mailing_backend');
@@ -184,9 +118,10 @@ class CRM_Admin_Form_Setting_Smtp extends CRM_Admin_Form_Setting {
 
     // if password is present, encrypt it
     if (!empty($formValues['smtpPassword'])) {
-      $formValues['smtpPassword'] = CRM_Utils_Crypt::encrypt($formValues['smtpPassword']);
+      $formValues['smtpPassword'] = \Civi::service('crypto.token')->encrypt($formValues['smtpPassword'], 'CRED');
     }
 
+    // FIXME: This setting stores all values from the quickform (including `qfKey`, etc)??
     Civi::settings()->set('mailing_backend', $formValues);
   }
 
@@ -196,32 +131,32 @@ class CRM_Admin_Form_Setting_Smtp extends CRM_Admin_Form_Setting {
    * @param array $fields
    *   Posted values of the form.
    *
-   * @return array
+   * @return array|bool
    *   list of errors to be posted back to the form
    */
-  public static function formRule($fields) {
+  public static function subfieldFormRules($fields) {
     if ($fields['outBound_option'] == CRM_Mailing_Config::OUTBOUND_OPTION_SMTP) {
       if (empty($fields['smtpServer'])) {
-        $errors['smtpServer'] = 'SMTP Server name is a required field.';
+        $errors['smtpServer'] = ts('SMTP Server name is a required field.');
       }
       if (empty($fields['smtpPort'])) {
-        $errors['smtpPort'] = 'SMTP Port is a required field.';
+        $errors['smtpPort'] = ts('SMTP Port is a required field.');
       }
       if (!empty($fields['smtpAuth'])) {
         if (empty($fields['smtpUsername'])) {
-          $errors['smtpUsername'] = 'If your SMTP server requires authentication please provide a valid user name.';
+          $errors['smtpUsername'] = ts('If your SMTP server requires authentication please provide a valid user name.');
         }
         if (empty($fields['smtpPassword'])) {
-          $errors['smtpPassword'] = 'If your SMTP server requires authentication, please provide a password.';
+          $errors['smtpPassword'] = ts('If your SMTP server requires authentication, please provide a password.');
         }
       }
     }
     if ($fields['outBound_option'] == CRM_Mailing_Config::OUTBOUND_OPTION_SENDMAIL) {
       if (!$fields['sendmail_path']) {
-        $errors['sendmail_path'] = 'Sendmail Path is a required field.';
+        $errors['sendmail_path'] = ts('Sendmail Path is a required field.');
       }
       if (!$fields['sendmail_args']) {
-        $errors['sendmail_args'] = 'Sendmail Argument is a required field.';
+        $errors['sendmail_args'] = ts('Sendmail Argument is a required field.');
       }
     }
 
@@ -232,31 +167,141 @@ class CRM_Admin_Form_Setting_Smtp extends CRM_Admin_Form_Setting {
    * Set default values for the form.
    */
   public function setDefaultValues() {
-    if (!$this->_defaults) {
-      $this->_defaults = array();
+    parent::setDefaultValues();
+    $this->_defaults += $this->convertMailingBackendToFormValues(Civi::settings()->get('mailing_backend'));
+    return $this->_defaults;
+  }
 
-      $mailingBackend = Civi::settings()->get('mailing_backend');
-      if (!empty($mailingBackend)) {
-        $this->_defaults = $mailingBackend;
+  public function getMandatoryValues(): array {
+    $result = parent::getMandatoryValues();
+    $backend = Civi::settings()->getMandatory('mailing_backend');
+    if ($backend !== NULL) {
+      $result = array_merge(
+        $result,
+        array_fill_keys($this->subfields, NULL),
+        $this->convertMailingBackendToFormValues($backend)
+      );
+    }
+    return $result;
+  }
 
-        if (!empty($this->_defaults['smtpPassword'])) {
-          $this->_defaults['smtpPassword'] = CRM_Utils_Crypt::decrypt($this->_defaults['smtpPassword']);
+  protected function convertMailingBackendToFormValues(?array $mailingBackend): array {
+    $result = [];
+
+    if (!empty($mailingBackend)) {
+      $result += $mailingBackend;
+
+      if (!empty($mailingBackend['smtpPassword'])) {
+        try {
+          $result['smtpPassword'] = \Civi::service('crypto.token')->decrypt($result['smtpPassword']);
         }
-      }
-      else {
-        if (!isset($this->_defaults['smtpServer'])) {
-          $this->_defaults['smtpServer'] = 'localhost';
-          $this->_defaults['smtpPort'] = 25;
-          $this->_defaults['smtpAuth'] = 0;
-        }
-
-        if (!isset($this->_defaults['sendmail_path'])) {
-          $this->_defaults['sendmail_path'] = '/usr/sbin/sendmail';
-          $this->_defaults['sendmail_args'] = '-i';
+        catch (Exception $e) {
+          Civi::log()->error($e->getMessage());
+          CRM_Core_Session::setStatus(ts('Unable to retrieve the encrypted password. Please check your configured encryption keys. The error message is: %1', [1 => $e->getMessage()]), ts("Encryption key error"), "error");
         }
       }
     }
-    return $this->_defaults;
+    else {
+      if (!isset($mailingBackend['smtpServer'])) {
+        $result['smtpServer'] = 'localhost';
+        $result['smtpPort'] = 25;
+        $result['smtpAuth'] = 0;
+      }
+
+      if (!isset($mailingBackend['sendmail_path'])) {
+        $result['sendmail_path'] = '/usr/sbin/sendmail';
+        $result['sendmail_args'] = '-i';
+      }
+    }
+
+    return $result;
+  }
+
+  /**
+   * Send a test email (with proposed configuration).
+   *
+   * @param array $formValues
+   */
+  protected function sendTest(array $formValues): void {
+    if ($formValues['outBound_option'] == CRM_Mailing_Config::OUTBOUND_OPTION_DISABLED) {
+      CRM_Core_Session::setStatus(ts('You have selected "Disable Outbound Email". A test email can not be sent.'), ts("Email Disabled"), "error");
+    }
+    elseif ($formValues['outBound_option'] == CRM_Mailing_Config::OUTBOUND_OPTION_REDIRECT_TO_DB) {
+      CRM_Core_Session::setStatus(ts('You have selected "Redirect to Database". A test email can not be sent.'), ts("Email Disabled"), "error");
+    }
+    else {
+      $session = CRM_Core_Session::singleton();
+      $userID = $session->get('userID');
+      [$toDisplayName, $toEmail] = CRM_Contact_BAO_Contact::getContactDetails($userID);
+
+      //get the default domain email address.CRM-4250
+      [$domainEmailName, $domainEmailAddress] = CRM_Core_BAO_Domain::getNameAndEmail();
+
+      if (!$domainEmailAddress || $domainEmailAddress === 'info@EXAMPLE.ORG') {
+        $fixUrl = CRM_Utils_System::url('civicrm/admin/options/site_email_address');
+        CRM_Core_Error::statusBounce(ts('The site administrator needs to enter a valid "Site From Email Address" in <a href="%1">Administer CiviCRM &raquo; Communications &raquo; Site Email Addresses</a>. The email address used may need to be a valid mail account with your email service provider.', [1 => $fixUrl]));
+      }
+      if (!$toEmail) {
+        CRM_Core_Error::statusBounce(ts('Cannot send a test email because your user record does not have a valid email address.'));
+      }
+
+      if (!trim($toDisplayName)) {
+        $toDisplayName = $toEmail;
+      }
+
+      $to = '"' . $toDisplayName . '"' . "<$toEmail>";
+      $from = '"' . $domainEmailName . '" <' . $domainEmailAddress . '>';
+
+      $params = [];
+      if ($formValues['outBound_option'] == CRM_Mailing_Config::OUTBOUND_OPTION_SMTP) {
+        $subject = "Test for SMTP settings";
+        $message = "SMTP settings are correct.";
+
+        $params['host'] = $formValues['smtpServer'];
+        $params['port'] = $formValues['smtpPort'];
+
+        if ($formValues['smtpAuth']) {
+          $params['username'] = $formValues['smtpUsername'];
+          $params['password'] = $formValues['smtpPassword'];
+          $params['auth'] = TRUE;
+        }
+        else {
+          $params['auth'] = FALSE;
+        }
+
+        // set the localhost value, CRM-3153, CRM-9332
+        $params['localhost'] = $_SERVER['SERVER_NAME'];
+
+        // also set the timeout value, lets set it to 30 seconds
+        // CRM-7510, CRM-9332
+        $params['timeout'] = 30;
+
+        $mailerName = 'smtp';
+      }
+      elseif ($formValues['outBound_option'] == CRM_Mailing_Config::OUTBOUND_OPTION_SENDMAIL) {
+        $subject = "Test for Sendmail settings";
+        $message = "Sendmail settings are correct.";
+        $params['sendmail_path'] = $formValues['sendmail_path'];
+        $params['sendmail_args'] = $formValues['sendmail_args'];
+        $mailerName = 'sendmail';
+      }
+      elseif ($formValues['outBound_option'] == CRM_Mailing_Config::OUTBOUND_OPTION_MAIL) {
+        $subject = "Test for PHP mail settings";
+        $message = "mail settings are correct.";
+        $mailerName = 'mail';
+      }
+
+      $mailParams = [
+        'from' => $from,
+        'to' => $to,
+        'subject' => $subject,
+        'text' => $message,
+        'toEmail' => $toEmail,
+      ];
+
+      $mailer = CRM_Utils_Mail::_createMailer($mailerName, $params);
+      CRM_Utils_Mail::sendTest($mailer, $mailParams);
+    }
   }
 
 }

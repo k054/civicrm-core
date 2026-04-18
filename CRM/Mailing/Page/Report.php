@@ -1,34 +1,18 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.7                                                |
- +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2016                                |
- +--------------------------------------------------------------------+
- | This file is a part of CiviCRM.                                    |
+ | Copyright CiviCRM LLC. All rights reserved.                        |
  |                                                                    |
- | CiviCRM is free software; you can copy, modify, and distribute it  |
- | under the terms of the GNU Affero General Public License           |
- | Version 3, 19 November 2007 and the CiviCRM Licensing Exception.   |
- |                                                                    |
- | CiviCRM is distributed in the hope that it will be useful, but     |
- | WITHOUT ANY WARRANTY; without even the implied warranty of         |
- | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.               |
- | See the GNU Affero General Public License for more details.        |
- |                                                                    |
- | You should have received a copy of the GNU Affero General Public   |
- | License and the CiviCRM Licensing Exception along                  |
- | with this program; if not, contact CiviCRM LLC                     |
- | at info[AT]civicrm[DOT]org. If you have questions about the        |
- | GNU Affero General Public License or the licensing of CiviCRM,     |
- | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
+ | This work is published under the GNU AGPLv3 license with some      |
+ | permitted exceptions and without any warranty. For full license    |
+ | and copyright information, see https://civicrm.org/licensing       |
  +--------------------------------------------------------------------+
  */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2016
+ * @copyright CiviCRM LLC https://civicrm.org/licensing
  */
 
 /**
@@ -48,6 +32,8 @@ class CRM_Mailing_Page_Report extends CRM_Core_Page_Basic {
   }
 
   /**
+   * An array of action links.
+   *
    * @return null
    */
   public function &links() {
@@ -96,7 +82,7 @@ class CRM_Mailing_Page_Report extends CRM_Core_Page_Basic {
     $this->_mailing_id = CRM_Utils_Request::retrieve('mid', 'Positive', $this);
     //CRM-15979 - check if abtest exist for mailing then redirect accordingly
     $abtest = CRM_Mailing_BAO_MailingAB::getABTest($this->_mailing_id);
-    if (!empty($abtest) && !empty($abtest->id)) {
+    if (!empty($abtest->id)) {
       CRM_Utils_System::redirect(CRM_Utils_System::url('civicrm/a/', NULL, TRUE, '/abtest/' . $abtest->id));
     }
     // check that the user has permission to access mailing id
@@ -108,7 +94,7 @@ class CRM_Mailing_Page_Report extends CRM_Core_Page_Basic {
     CRM_Mailing_BAO_Mailing::getMailingContent($report, $this);
 
     // assign backurl
-    $context = CRM_Utils_Request::retrieve('context', 'String', $this);
+    $context = CRM_Utils_Request::retrieve('context', 'Alphanumeric', $this);
     $cid = CRM_Utils_Request::retrieve('cid', 'Positive', $this);
 
     if ($context == 'activitySelector') {
@@ -132,13 +118,17 @@ class CRM_Mailing_Page_Report extends CRM_Core_Page_Basic {
       $backUrl = CRM_Utils_System::url('civicrm/mailing', 'reset=1');
       $backUrlTitle = ts('Back to CiviMail');
     }
+    // Hide back button in modal dialog context
+    if (CRM_Core_Resources::isAjaxMode()) {
+      $backUrl = NULL;
+    }
     $this->assign('backUrl', $backUrl);
     $this->assign('backUrlTitle', $backUrlTitle);
-
+    // We use this variable to alter the Mailing Report layout
+    $this->assign('is_adminui_enabled', FALSE);
     $this->assign('report', $report);
-    CRM_Utils_System::setTitle(ts('CiviMail Report: %1',
-      array(1 => $report['mailing']['name'])
-    ));
+    CRM_Utils_System::setTitle(ts('CiviMail Report: %1', [1 => $report['mailing']['name']]));
+    $this->assign('public_url', CRM_Mailing_BAO_Mailing::getPublicViewUrl($this->_mailing_id));
 
     return CRM_Core_Page::run();
   }

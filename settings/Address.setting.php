@@ -1,82 +1,93 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.7                                                |
- +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2016                                |
- +--------------------------------------------------------------------+
- | This file is a part of CiviCRM.                                    |
+ | Copyright CiviCRM LLC. All rights reserved.                        |
  |                                                                    |
- | CiviCRM is free software; you can copy, modify, and distribute it  |
- | under the terms of the GNU Affero General Public License           |
- | Version 3, 19 November 2007 and the CiviCRM Licensing Exception.   |
- |                                                                    |
- | CiviCRM is distributed in the hope that it will be useful, but     |
- | WITHOUT ANY WARRANTY; without even the implied warranty of         |
- | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.               |
- | See the GNU Affero General Public License for more details.        |
- |                                                                    |
- | You should have received a copy of the GNU Affero General Public   |
- | License and the CiviCRM Licensing Exception along                  |
- | with this program; if not, contact CiviCRM LLC                     |
- | at info[AT]civicrm[DOT]org. If you have questions about the        |
- | GNU Affero General Public License or the licensing of CiviCRM,     |
- | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
+ | This code is published under the GNU AGPLv3 license with some      |
+ | permitted exceptions and without any warranty. For full license    |
+ | and copyright information, see https://civicrm.org/licensing       |
  +--------------------------------------------------------------------+
  */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2016
- * $Id$
- *
+ * @copyright CiviCRM LLC https://civicrm.org/licensing
  */
-/*
+
+/**
  * Settings metadata file
  */
-return array(
-  'address_standardization_provider' => array(
+return [
+  'address_standardization_provider' => [
     'group_name' => 'Address Preferences',
     'group' => 'address',
     'name' => 'address_standardization_provider',
     'type' => 'String',
-    'html_type' => 'Select',
+    'html_type' => 'select',
     'default' => NULL,
     'add' => '4.1',
-    'title' => 'Address Standardization Provider.',
+    'title' => ts('Address Standardization Provider.'),
+    'pseudoconstant' => ['callback' => 'CRM_Core_SelectValues::addressProvider'],
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => NULL,
-    'help_text' => 'CiviCRM includes an optional plugin for interfacing with the United States Postal Services (USPS) Address Standardization web service. You must register to use the USPS service at https://www.usps.com/business/web-tools-apis/address-information.htm. If you are approved, they will provide you with a User ID and the URL for the service. Plugins for other address standardization services may be available from 3rd party developers. If installed, they will be included in the drop-down below. ',
-  ),
-  'address_standardization_userid' => array(
+    'help_text' => [
+      ts('CiviCRM includes an optional plugin for interfacing with the United States Postal Services (USPS) Address Standardization web service.'),
+      ts('Plugins for other address standardization services may be available from 3rd party developers. If installed, they will be included in the drop-down below.'),
+    ],
+    'help_doc_url' => [
+      'page' => 'user/common-workflows/importing-data-into-civicrm/#address-standardisation',
+    ],
+    'settings_pages' => ['address' => ['section' => 'standardization', 'weight' => 10]],
+  ],
+  'address_standardization_key' => [
     'group_name' => 'Address Preferences',
     'group' => 'address',
-    'name' => 'address_standardization_userid',
-    'type' => 'String',
-    'html_type' => 'Text',
-    'default' => NULL,
-    'add' => '4.1',
-    'title' => 'Web service user ID',
-    'is_domain' => 1,
-    'is_contact' => 0,
-    'description' => NULL,
-    'help_text' => NULL,
-  ),
-  'address_standardization_url' => array(
-    'group_name' => 'Address Preferences',
-    'group' => 'address',
-    'name' => 'address_standardization_url',
+    'name' => 'address_standardization_key',
     'type' => 'Text',
-    'html_type' => 'Text',
+    'html_type' => 'text',
     'default' => NULL,
-    'add' => '4.1',
-    'title' => 'Web Service URL',
+    'add' => '6.10',
+    'title' => ts('Provider Consumer Key'),
     'is_domain' => 1,
     'is_contact' => 0,
-    'description' => NULL,
-    'help_text' => 'Web Service URL',
-    'validate_callback' => 'CRM_Utils_Rule::url',
-  ),
-);
+    'help_text' => ts('Consumer Key for the address standardization provider'),
+    'settings_pages' => ['address' => ['section' => 'standardization', 'weight' => 20]],
+    'html_attributes' => [
+      'size' => 64,
+      'maxlength' => 256,
+    ],
+  ],
+  'address_standardization_secret' => [
+    'group_name' => 'Address Preferences',
+    'group' => 'address',
+    'name' => 'address_standardization_secret',
+    'type' => 'Text',
+    'html_type' => 'text',
+    'default' => NULL,
+    'add' => '6.10',
+    'title' => ts('Provider Consumer Secret'),
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'help_text' => ts('Consumer Secret for the address standardization provider'),
+    'settings_pages' => ['address' => ['section' => 'standardization', 'weight' => 30]],
+    'html_attributes' => [
+      'size' => 64,
+      'maxlength' => 256,
+    ],
+  ],
+  'hideCountryMailingLabels' => [
+    'group_name' => 'Address Preferences',
+    'group' => 'address',
+    'name'  => 'hideCountryMailingLabels',
+    'type' => 'Boolean',
+    'html_type' => 'toggle',
+    'default' => 0,
+    'add' => '4.7',
+    'title' => ts('Hide Country in Mailing Labels when same as domain country'),
+    'is_domain' => 1,
+    'is_contact' => 0,
+    'help_text' => ts('Do not display the country field in mailing labels when the country is the same as that of the domain'),
+    'settings_pages' => ['address' => ['section' => 'labels', 'weight' => 20]],
+  ],
+];

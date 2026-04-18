@@ -8,7 +8,7 @@ namespace Civi\Token\Event;
  * A TokenValueEvent is fired to convert raw query data into mergeable
  * tokens. For example:
  *
- * @code
+ * ```
  * $event = new TokenValueEvent($myContext, 'text/html', array(
  *   array('contact_id' => 123),
  *   array('contact_id' => 456),
@@ -32,11 +32,12 @@ namespace Civi\Token\Event;
  * }
  * @encode
  *
+ * Event name: 'civi.token.eval'
  */
 class TokenValueEvent extends TokenEvent {
 
   /**
-   * @return \Traversable<TokenRow>
+   * @return \Traversable<\Civi\Token\TokenRow>
    */
   public function getRows() {
     return $this->tokenProcessor->getRows();

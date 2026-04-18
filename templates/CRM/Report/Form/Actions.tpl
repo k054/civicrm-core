@@ -1,35 +1,16 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.7                                                |
- +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2016                                |
- +--------------------------------------------------------------------+
- | This file is a part of CiviCRM.                                    |
+ | Copyright CiviCRM LLC. All rights reserved.                        |
  |                                                                    |
- | CiviCRM is free software; you can copy, modify, and distribute it  |
- | under the terms of the GNU Affero General Public License           |
- | Version 3, 19 November 2007 and the CiviCRM Licensing Exception.   |
- |                                                                    |
- | CiviCRM is distributed in the hope that it will be useful, but     |
- | WITHOUT ANY WARRANTY; without even the implied warranty of         |
- | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.               |
- | See the GNU Affero General Public License for more details.        |
- |                                                                    |
- | You should have received a copy of the GNU Affero General Public   |
- | License and the CiviCRM Licensing Exception along                  |
- | with this program; if not, contact CiviCRM LLC                     |
- | at info[AT]civicrm[DOT]org. If you have questions about the        |
- | GNU Affero General Public License or the licensing of CiviCRM,     |
- | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
+ | This work is published under the GNU AGPLv3 license with some      |
+ | permitted exceptions and without any warranty. For full license    |
+ | and copyright information, see https://civicrm.org/licensing       |
  +--------------------------------------------------------------------+
 *}
-{if !$printOnly} {* NO print section starts *}
+{if empty($printOnly)} {* NO print section starts *}
 
   {* build the print pdf buttons *}
     <div class="crm-tasks">
-      {assign var=print value="_qf_"|cat:$form.formName|cat:"_submit_print"}
-      {assign var=pdf   value="_qf_"|cat:$form.formName|cat:"_submit_pdf"}
-      {assign var=csv   value="_qf_"|cat:$form.formName|cat:"_submit_csv"}
       {assign var=group value="_qf_"|cat:$form.formName|cat:"_submit_group"}
       {assign var=chart value="_qf_"|cat:$form.formName|cat:"_submit_chart"}
       <table style="border:0;">
@@ -37,24 +18,22 @@
           <td>
             <table class="form-layout-compressed">
               <tr>
-                <td>{$form.$print.html}&nbsp;&nbsp;</td>
-                <td>{$form.$pdf.html}&nbsp;&nbsp;</td>
-                <td>{$form.$csv.html}&nbsp;&nbsp;</td>
-                {if $instanceUrl}
-                  <td>&nbsp;&nbsp;&raquo;&nbsp;<a href="{$instanceUrl}">{ts}Existing report(s) from this template{/ts}</a></td>
+                {include file="CRM/common/tasks.tpl" location="botton"}
+                {if !empty($instanceUrl)}
+                  <td>&nbsp;&nbsp;<i class="crm-i fa-chevron-right" role="img" aria-hidden="true"></i> <a href="{$instanceUrl}">{ts}Existing report(s) from this template{/ts}</a></td>
                 {/if}
               </tr>
             </table>
           </td>
           <td>
             <table class="form-layout-compressed" align="right">
-              {if $chartSupported}
+              {if !empty($chartSupported)}
                 <tr>
                   <td>{$form.charts.html|crmAddClass:big}</td>
                   <td align="right">{$form.$chart.html}</td>
                 </tr>
               {/if}
-              {if $form.groups}
+              {if !empty($form.groups)}
                 <tr>
                   <td>
                     {$form.groups.html}{$form.$group.html}
@@ -63,7 +42,7 @@
                       (function($) {
                         $('#groups').val('').change(function() {
                           CRM.confirm({
-                            message: ts({/literal}'{ts escape='js' 1='<em>%1</em>'}Add all contacts to %1 group?{/ts}'{literal}, {1: $('option:selected', '#groups').text()})
+                            message: ts({/literal}'{ts escape='js' 1='<em>%1</em>'}Add all contacts to %1 group?{/ts}'{literal}, {1: CRM._.escape($('option:selected', '#groups').text())})
                           })
                             .on({
                               'crmConfirm:yes': function() {
@@ -92,7 +71,7 @@
       // Disable print/pdf output of charts
       $('select[name=charts]', 'form.crm-report-form').change(function() {
         var viewType = $(this).val(),
-          flashChartType = '{/literal}{if $chartType}{$chartType}{else}{/if}{literal}';
+          flashChartType = '{/literal}{if !empty($chartType)}{$chartType}{else}{/if}{literal}';
         $('#_qf_Summary_submit_pdf, #_qf_Summary_submit_print').prop('disabled', (viewType && flashChartType != viewType));
       });
     });

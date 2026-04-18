@@ -1,34 +1,18 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.7                                                |
- +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2016                                |
- +--------------------------------------------------------------------+
- | This file is a part of CiviCRM.                                    |
+ | Copyright CiviCRM LLC. All rights reserved.                        |
  |                                                                    |
- | CiviCRM is free software; you can copy, modify, and distribute it  |
- | under the terms of the GNU Affero General Public License           |
- | Version 3, 19 November 2007 and the CiviCRM Licensing Exception.   |
- |                                                                    |
- | CiviCRM is distributed in the hope that it will be useful, but     |
- | WITHOUT ANY WARRANTY; without even the implied warranty of         |
- | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.               |
- | See the GNU Affero General Public License for more details.        |
- |                                                                    |
- | You should have received a copy of the GNU Affero General Public   |
- | License and the CiviCRM Licensing Exception along                  |
- | with this program; if not, contact CiviCRM LLC                     |
- | at info[AT]civicrm[DOT]org. If you have questions about the        |
- | GNU Affero General Public License or the licensing of CiviCRM,     |
- | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
+ | This work is published under the GNU AGPLv3 license with some      |
+ | permitted exceptions and without any warranty. For full license    |
+ | and copyright information, see https://civicrm.org/licensing       |
  +--------------------------------------------------------------------+
  */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2016
+ * @copyright CiviCRM LLC https://civicrm.org/licensing
  */
 
 /**
@@ -63,8 +47,8 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
   /**
    * Retrieve the value of a setting from the DB table.
    *
-   * @param string $group
-   *   (required) The group name of the item.
+   * @param string|null $group
+   *   The group name of the item (deprecated).
    * @param string $name
    *   (required) The name under which this item is stored.
    * @param int $componentID
@@ -90,22 +74,20 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
     /** @var \Civi\Core\SettingsManager $manager */
     $manager = \Civi::service('settings_manager');
     $settings = ($contactID === NULL) ? $manager->getBagByDomain($domainID) : $manager->getBagByContact($domainID, $contactID);
-    if (TRUE) {
-      if ($name === NULL) {
-        CRM_Core_Error::debug_log_message("Deprecated: Group='$group'. Name should be provided.\n");
-      }
-      if ($componentID !== NULL) {
-        CRM_Core_Error::debug_log_message("Deprecated: Group='$group'. Name='$name'. Component should be omitted\n");
-      }
-      if ($defaultValue !== NULL) {
-        CRM_Core_Error::debug_log_message("Deprecated: Group='$group'. Name='$name'. Defaults should come from metadata\n");
-      }
+    if ($name === NULL) {
+      CRM_Core_Error::deprecatedWarning("Deprecated: Group='$group'. Name should be provided.\n");
+    }
+    if ($componentID !== NULL) {
+      CRM_Core_Error::deprecatedWarning("Deprecated: Group='$group'. Name='$name'. Component should be omitted\n");
+    }
+    if ($defaultValue !== NULL) {
+      CRM_Core_Error::deprecatedWarning("Deprecated: Group='$group'. Name='$name'. Defaults should come from metadata\n");
     }
     return $name ? $settings->get($name) : $settings->all();
   }
 
   /**
-   * Store multiple items in the setting table.
+   * Get multiple items from the setting table.
    *
    * @param array $params
    *   (required) An api formatted array of keys and values.
@@ -114,27 +96,21 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
    *
    * @return array
    */
-  public static function getItems(&$params, $domains = NULL, $settingsToReturn) {
+  public static function getItems(&$params, $domains, $settingsToReturn) {
     $originalDomain = CRM_Core_Config::domainID();
     if (empty($domains)) {
       $domains[] = $originalDomain;
     }
     if (!empty($settingsToReturn) && !is_array($settingsToReturn)) {
-      $settingsToReturn = array($settingsToReturn);
+      $settingsToReturn = [$settingsToReturn];
     }
-    $reloadConfig = FALSE;
 
-    $fields = $result = array();
+    $fields = $result = [];
     $fieldsToGet = self::validateSettingsInput(array_flip($settingsToReturn), $fields, FALSE);
     foreach ($domains as $domainID) {
-      if ($domainID != CRM_Core_Config::domainID()) {
-        $reloadConfig = TRUE;
-        CRM_Core_BAO_Domain::setDomain($domainID);
-      }
-      $config = CRM_Core_Config::singleton($reloadConfig, $reloadConfig);
-      $result[$domainID] = array();
+      $result[$domainID] = [];
       foreach ($fieldsToGet as $name => $value) {
-        $contactID = CRM_Utils_Array::value('contact_id', $params);
+        $contactID = $params['contact_id'] ?? NULL;
         $setting = CRM_Core_BAO_Setting::getItem(NULL, $name, NULL, NULL, $contactID, $domainID);
         if (!is_null($setting)) {
           // we won't return if not set - helps in return all scenario - otherwise we can't indentify the missing ones
@@ -142,7 +118,6 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
           $result[$domainID][$name] = $setting;
         }
       }
-      CRM_Core_BAO_Domain::resetDomain();
     }
     return $result;
   }
@@ -150,12 +125,10 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
   /**
    * Store an item in the setting table.
    *
-   * _setItem() is the common logic shared by setItem() and setItems().
-   *
-   * @param object $value
+   * @param mixed $value
    *   (required) The value that will be serialized and stored.
    * @param string $group
-   *   (required) The group name of the item.
+   *   The group name of the item (deprecated).
    * @param string $name
    *   (required) The name of the setting.
    * @param int $componentID
@@ -165,6 +138,10 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
    *   An optional ID to assign the creator to. If not set, retrieved from session.
    *
    * @param int $domainID
+   *
+   * @throws \CRM_Core_Exception
+   *
+   * @deprecated - refer docs https://docs.civicrm.org/dev/en/latest/framework/setting/
    */
   public static function setItem(
     $value,
@@ -175,6 +152,8 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
     $createdID = NULL,
     $domainID = NULL
   ) {
+    CRM_Core_Error::deprecatedFunctionWarning('refer docs for correct methods https://docs.civicrm.org/dev/en/latest/framework/setting/');
+
     /** @var \Civi\Core\SettingsManager $manager */
     $manager = \Civi::service('settings_manager');
     $settings = ($contactID === NULL) ? $manager->getBagByDomain($domainID) : $manager->getBagByContact($domainID, $contactID);
@@ -188,26 +167,28 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
    *  'config_key' = the config key is different to the settings key - e.g. debug where there was a conflict
    *  'legacy_key' = rename from config or setting with this name
    *
-   * _setItem() is the common logic shared by setItem() and setItems().
-   *
    * @param array $params
    *   (required) An api formatted array of keys and values.
-   * @param null $domains
+   * @param array|null $domains
    *
-   * @throws api_Exception
+   * @throws CRM_Core_Exception
    * @domains array an array of domains to get settings for. Default is the current domain
    * @return array
    */
   public static function setItems(&$params, $domains = NULL) {
-    $domains = empty($domains) ? array(CRM_Core_Config::domainID()) : $domains;
+    $domains = empty($domains) ? [CRM_Core_Config::domainID()] : $domains;
 
     // FIXME: redundant validation
     // FIXME: this whole thing should just be a loop to call $settings->add() on each domain.
 
-    $fields = array();
+    $fields = [];
     $fieldsToSet = self::validateSettingsInput($params, $fields);
 
     foreach ($fieldsToSet as $settingField => &$settingValue) {
+      if (empty($fields['values'][$settingField])) {
+        CRM_Core_Error::deprecatedWarning('Deprecated Path: There is a setting (' . $settingField . ') not correctly defined. You may see unpredictability due to this. CRM_Core_Setting::setItems');
+        $fields['values'][$settingField] = [];
+      }
       self::validateSetting($settingValue, $fields['values'][$settingField]);
     }
 
@@ -230,14 +211,12 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
    *   Empty array to be populated with fields metadata.
    * @param bool $createMode
    *
-   * @throws api_Exception
+   * @throws CRM_Core_Exception
    * @return array
    *   name => value array of the fields to be set (with extraneous removed)
    */
   public static function validateSettingsInput($params, &$fields, $createMode = TRUE) {
-    $group = CRM_Utils_Array::value('group', $params);
-
-    $ignoredParams = array(
+    $ignoredParams = [
       'version',
       'id',
       'domain_id',
@@ -255,25 +234,33 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
       'check_permissions',
       'options',
       'prettyprint',
-    );
+      // CRM-18347: ignore params unintentionally passed by API explorer on WP
+      'page',
+      'noheader',
+      // CRM-18347: ignore params unintentionally passed by wp CLI tool
+      '',
+      // CRM-19877: ignore params extraneously passed by Joomla
+      'option',
+      'task',
+    ];
     $settingParams = array_diff_key($params, array_fill_keys($ignoredParams, TRUE));
-    $getFieldsParams = array('version' => 3);
+    $getFieldsParams = ['version' => 3];
     if (count($settingParams) == 1) {
       // ie we are only setting one field - we'll pass it into getfields for efficiency
-      list($name) = array_keys($settingParams);
+      [$name] = array_keys($settingParams);
       $getFieldsParams['name'] = $name;
     }
     $fields = civicrm_api3('setting', 'getfields', $getFieldsParams);
     $invalidParams = (array_diff_key($settingParams, $fields['values']));
     if (!empty($invalidParams)) {
-      throw new api_Exception(implode(',', array_keys($invalidParams)) . " not valid settings");
+      throw new CRM_Core_Exception(implode(',', array_keys($invalidParams)) . " not valid settings");
     }
     if (!empty($settingParams)) {
       $filteredFields = array_intersect_key($settingParams, $fields['values']);
     }
     else {
       // no filters so we are interested in all for get mode. In create mode this means nothing to set
-      $filteredFields = $createMode ? array() : $fields['values'];
+      $filteredFields = $createMode ? [] : $fields['values'];
     }
     return $filteredFields;
   }
@@ -285,12 +272,15 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
    *   value of the setting to be set
    * @param array $fieldSpec
    *   Metadata for given field (drawn from the xml)
+   * @param bool $convertToSerializedString
+   *   Deprecated mode
    *
    * @return bool
-   * @throws \api_Exception
+   * @throws \CRM_Core_Exception
    */
-  public static function validateSetting(&$value, $fieldSpec) {
-    if ($fieldSpec['type'] == 'String' && is_array($value)) {
+  public static function validateSetting(&$value, array $fieldSpec, $convertToSerializedString = TRUE) {
+    // Deprecated guesswork - should use $fieldSpec['serialize']
+    if ($convertToSerializedString && $fieldSpec['type'] == 'String' && is_array($value)) {
       $value = CRM_Core_DAO::VALUE_SEPARATOR . implode(CRM_Core_DAO::VALUE_SEPARATOR, $value) . CRM_Core_DAO::VALUE_SEPARATOR;
     }
     if (empty($fieldSpec['validate_callback'])) {
@@ -298,8 +288,8 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
     }
     else {
       $cb = Civi\Core\Resolver::singleton()->get($fieldSpec['validate_callback']);
-      if (!call_user_func_array($cb, array(&$value, $fieldSpec))) {
-        throw new api_Exception("validation failed for {$fieldSpec['name']} = $value  based on callback {$fieldSpec['validate_callback']}");
+      if (!call_user_func_array($cb, [&$value, $fieldSpec])) {
+        throw new CRM_Core_Exception("validation failed for {$fieldSpec['name']} = $value  based on callback {$fieldSpec['validate_callback']}");
       }
     }
   }
@@ -311,11 +301,11 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
    * @param array $fieldSpec Metadata for given field (drawn from the xml)
    *
    * @return bool
-   * @throws \api_Exception
+   * @throws \CRM_Core_Exception
    */
   public static function validateBoolSetting(&$value, $fieldSpec) {
     if (!CRM_Utils_Rule::boolean($value)) {
-      throw new api_Exception("Boolean value required for {$fieldSpec['name']}");
+      throw new CRM_Core_Exception("Boolean value required for {$fieldSpec['name']}");
     }
     if (!$value) {
       $value = 0;
@@ -326,43 +316,79 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
     return TRUE;
   }
 
+  public static function validateMaxFileSize($value): bool {
+    if (!$value) {
+      // Value is not required
+      return TRUE;
+    }
+    if (!CRM_Utils_Rule::positiveInteger($value)) {
+      throw new CRM_Core_Exception(ts('Maximum file size must be a positive integer'));
+    }
+    $iniBytes = CRM_Utils_Number::formatUnitSize(ini_get('upload_max_filesize'));
+    $inputBytes = ((int) $value) * 1024 * 1024;
+
+    if ($inputBytes > $iniBytes) {
+      throw new CRM_Core_Exception(ts('Maximum file size cannot exceed limit defined in "php.ini" ("upload_max_filesize=%1").', [
+        1 => ini_get('upload_max_filesize'),
+      ]));
+    }
+    return TRUE;
+  }
+
+  public static function validateExecutable($value, $fieldSpec): bool {
+    // Required is a separate check
+    if (!$value) {
+      return TRUE;
+    }
+    // Only check the first space separated piece to allow for a value
+    // such as /usr/bin/xvfb-run -- weasyprint
+    $pieces = explode(' ', $value, 2);
+    $executable = $pieces[0];
+    if (!file_exists($executable)) {
+      throw new CRM_Core_Exception("Executable $executable does not exist");
+    }
+    if (!is_executable($executable)) {
+      throw new CRM_Core_Exception("Executable $executable is not executable");
+    }
+    return TRUE;
+  }
+
+  public static function validateEnableSSL($value, $fieldSpec): bool {
+    if ($value) {
+      $url = str_replace('http://', 'https://',
+        CRM_Utils_System::url('civicrm/dashboard', 'reset=1', TRUE, NULL, FALSE)
+      );
+      if (!CRM_Utils_System::checkURL($url, TRUE)) {
+        throw new CRM_Core_Exception(ts('You need to set up a secure server before you can use the Force Secure URLs option'));
+      }
+    }
+    return TRUE;
+  }
+
+  public static function validateCustomTranslateFunction($value, $fieldSpec): bool {
+    if ($value && !function_exists($value)) {
+      throw new CRM_Core_Exception(ts('Please define the custom translation function first.'));
+    }
+    return TRUE;
+  }
+
+  public static function validatePath($value, $fieldSpec): bool {
+    if (isset($value) && strlen($value) && !CRM_Utils_Rule::settingPath($value)) {
+      throw new CRM_Core_Exception(ts("'%1' directory does not exist", [1 => $value]));
+    }
+    return TRUE;
+  }
+
   /**
-   * This provides information about the setting - similar to the fields concept for DAO information.
-   * As the setting is serialized code creating validation setting input needs to know the data type
-   * This also helps move information out of the form layer into the data layer where people can interact with
-   * it via the API or other mechanisms. In order to keep this consistent it is important the form layer
-   * also leverages it.
-   *
-   * Note that this function should never be called when using the runtime getvalue function. Caching works
-   * around the expectation it will be called during setting administration
-   *
-   * Function is intended for configuration rather than runtime access to settings
-   *
-   * The following params will filter the result. If none are passed all settings will be returns
-   *
-   * @param int $componentID
-   *   Id of relevant component.
-   * @param array $filters
-   * @param int $domainID
-   * @param null $profile
-   *
-   * @return array
-   *   the following information as appropriate for each setting
-   *   - name
-   *   - type
-   *   - default
-   *   - add (CiviCRM version added)
-   *   - is_domain
-   *   - is_contact
-   *   - description
-   *   - help_text
+   * @deprecated in 6.9 will be removed around 6.21
    */
   public static function getSettingSpecification(
     $componentID = NULL,
-    $filters = array(),
+    $filters = [],
     $domainID = NULL,
     $profile = NULL
   ) {
+    CRM_Core_Error::deprecatedFunctionWarning('Civi\Core\SettingsMetadata::getMetadata');
     return \Civi\Core\SettingsMetadata::getMetadata($filters, $domainID);
   }
 
@@ -394,7 +420,7 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
 
     //enabled name => label require for new contact edit form, CRM-4605
     if ($returnNameANDLabels) {
-      $names = $labels = $nameAndLabels = array();
+      $names = $labels = $nameAndLabels = [];
       if ($returnField == 'name') {
         $names = $groupValues;
         $labels = CRM_Core_OptionGroup::values($name, FALSE, FALSE, $localize, $condition, 'label');
@@ -405,7 +431,7 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
       }
     }
 
-    $returnValues = array();
+    $returnValues = [];
     foreach ($groupValues as $gn => $gv) {
       $returnValues[$gv] = 0;
     }
@@ -430,12 +456,17 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
   }
 
   /**
-   * @param $group
+   * @param string $group
+   *   Deprecated parameter
    * @param string $name
-   * @param $value
+   * @param mixed $value
    * @param bool $system
    * @param int $userID
    * @param string $keyField
+   *
+   * @throws \CRM_Core_Exception
+   *
+   * @deprecated
    */
   public static function setValueOption(
     $group,
@@ -445,13 +476,14 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
     $userID = NULL,
     $keyField = 'name'
   ) {
+    CRM_Core_Error::deprecatedFunctionWarning('refer docs for correct methods https://docs.civicrm.org/dev/en/latest/framework/setting/');
     if (empty($value)) {
       $optionValue = NULL;
     }
     elseif (is_array($value)) {
       $groupValues = CRM_Core_OptionGroup::values($name, FALSE, FALSE, FALSE, NULL, $keyField);
 
-      $cbValues = array();
+      $cbValues = [];
       foreach ($groupValues as $key => $val) {
         if (!empty($value[$val])) {
           $cbValues[$key] = 1;
@@ -475,18 +507,90 @@ class CRM_Core_BAO_Setting extends CRM_Core_DAO_Setting {
   }
 
   /**
-   * Civicrm_setting didn't exist before 4.1.alpha1 and this function helps taking decisions during upgrade
+   * Check if environment is explicitly set.
+   *
+   * @param $setting
    *
    * @return bool
    */
-  public static function isUpgradeFromPreFourOneAlpha1() {
-    if (CRM_Core_Config::isUpgradeMode()) {
-      $currentVer = CRM_Core_BAO_Domain::version();
-      if (version_compare($currentVer, '4.1.alpha1') < 0) {
-        return TRUE;
+  public static function isEnvironmentSet($setting): bool {
+    CRM_Core_Error::deprecatedFunctionWarning('no alternative');
+    $environment = CRM_Core_Config::environment();
+    return $setting === 'environment' && $environment;
+  }
+
+  /**
+   * Check if job is able to be executed by API.
+   *
+   * @param $params
+   *
+   * @throws \CRM_Core_Exception
+   */
+  public static function isAPIJobAllowedToRun($params): void {
+    $environment = CRM_Core_Config::environment(NULL, TRUE);
+    if ($environment !== 'Production') {
+      if (empty($params['runInNonProductionEnvironment'])) {
+        throw new CRM_Core_Exception(ts('Job has not been executed as it is a %1 (non-production) environment.', [1 => $environment]));
       }
     }
-    return FALSE;
+  }
+
+  /**
+   * Setting Callback - On Change.
+   *
+   * Respond to changes in the "environment" setting.
+   *
+   * @param array $oldValue
+   *   Value of old environment mode.
+   * @param array $newValue
+   *   Value of new environment mode.
+   * @param array $metadata
+   *   Specification of the setting (per *.settings.php).
+   */
+  public static function onChangeEnvironmentSetting($oldValue, $newValue, $metadata) {
+    if ($newValue !== 'Production') {
+      CRM_Core_Session::setStatus(ts('Outbound emails have been disabled. Scheduled jobs will not run unless runInNonProductionEnvironment=TRUE is added as a parameter for a specific job'), ts("Non-production environment set"), "success");
+      Civi::settings()->set('mailing_backend', ['outBound_option' => CRM_Mailing_Config::OUTBOUND_OPTION_DISABLED]);
+    }
+    if ($newValue == 'Production' && $oldValue != 'Production') {
+      $mailing_backend = Civi::settings()->get('mailing_backend');
+      if ($mailing_backend['outBound_option'] == CRM_Mailing_Config::OUTBOUND_OPTION_DISABLED) {
+        CRM_Core_Session::setStatus(ts('Now that your site is in production mode, you may want to enable <a %1>outbound email</a>.', [1 => 'href="' . CRM_Utils_System::url('civicrm/admin/setting/smtp', 'reset=1') . '"']), ts("Production environment set"), "success");
+      }
+    }
+  }
+
+  public static function loggingMetadataCallback(array &$setting): void {
+    // Disable field on setting form if system does not meet requirements
+    if (\CRM_Core_I18n::isMultilingual()) {
+      $setting['description'] = ts('Logging is not supported in multilingual environments.');
+      $setting['html_attributes']['disabled'] = 'disabled';
+    }
+    elseif (!\CRM_Core_DAO::checkTriggerViewPermission(FALSE)) {
+      $setting['description'] = ts("In order to use this functionality, the installation's database user must have privileges to create triggers (in MySQL 5.0 – and in MySQL 5.1 if binary logging is enabled – this means the SUPER privilege). This install either does not seem to have the required privilege enabled.");
+      $setting['html_attributes']['disabled'] = 'disabled';
+    }
+  }
+
+  public static function userFrameworkLoggingMetadataCallback(array &$setting): void {
+    // Don't show this setting on the form if CMS doesn't support it (currently only Drupal)
+    if (!CRM_Core_Config::singleton()->userSystem->supportsUfLogging()) {
+      unset($setting['settings_pages']['debug']);
+    }
+  }
+
+  public static function wpBasePageMetadataCallback(array &$setting): void {
+    // Don't show this setting on the form if CMS doesn't support it
+    if (!CRM_Core_Config::singleton()->userSystem->canSetBasePage()) {
+      unset($setting['settings_pages']['uf']);
+    }
+  }
+
+  public static function userFrameworkUsersTableNameMetadataCallback(array &$setting): void {
+    // Don't show this setting on the form if CMS doesn't support it
+    if (!CRM_Core_Config::singleton()->userSystem->hasUsersTable()) {
+      unset($setting['settings_pages']['uf']);
+    }
   }
 
 }

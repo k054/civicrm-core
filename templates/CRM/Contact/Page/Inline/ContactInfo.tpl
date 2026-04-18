@@ -1,33 +1,18 @@
 {*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.7                                                |
- +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2016                                |
- +--------------------------------------------------------------------+
- | This file is a part of CiviCRM.                                    |
+ | Copyright CiviCRM LLC. All rights reserved.                        |
  |                                                                    |
- | CiviCRM is free software; you can copy, modify, and distribute it  |
- | under the terms of the GNU Affero General Public License           |
- | Version 3, 19 November 2007 and the CiviCRM Licensing Exception.   |
- |                                                                    |
- | CiviCRM is distributed in the hope that it will be useful, but     |
- | WITHOUT ANY WARRANTY; without even the implied warranty of         |
- | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.               |
- | See the GNU Affero General Public License for more details.        |
- |                                                                    |
- | You should have received a copy of the GNU Affero General Public   |
- | License and the CiviCRM Licensing Exception along                  |
- | with this program; if not, contact CiviCRM LLC                     |
- | at info[AT]civicrm[DOT]org. If you have questions about the        |
- | GNU Affero General Public License or the licensing of CiviCRM,     |
- | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
+ | This work is published under the GNU AGPLv3 license with some      |
+ | permitted exceptions and without any warranty. For full license    |
+ | and copyright information, see https://civicrm.org/licensing       |
  +--------------------------------------------------------------------+
 *}
-<div id="crm-contactinfo-content" {if $permission EQ 'edit'} class="crm-inline-edit" data-edit-params='{ldelim}"cid": "{$contactId}", "class_name": "CRM_Contact_Form_Inline_ContactInfo"{rdelim}'{/if}>
-  <div class="crm-clear crm-inline-block-content" {if $permission EQ 'edit'}title="{ts}Edit info{/ts}"{/if}>
+{* data-edit-params to reload this info whenever relationship gets updated *}
+<div id="crm-contactinfo-content" {if $permission EQ 'edit'} class="crm-inline-edit" {/if} data-dependent-fields='["#crm-contactname-content"]' data-edit-params='{ldelim}"cid": "{$contactId}", "class_name": "CRM_Contact_Form_Inline_ContactInfo"{rdelim}'>
+  <div class="crm-clear crm-inline-block-content" {if $permission EQ 'edit'}title="{ts escape='htmlattribute'}Edit info{/ts}"{/if}>
     {if $permission EQ 'edit'}
     <div class="crm-edit-help">
-      <span class="crm-i fa-pencil"></span> {ts}Edit info{/ts}
+      <span class="crm-i fa-pencil" role="img" aria-hidden="true"></span> {ts}Edit info{/ts}
     </div>
     {/if}
 
@@ -36,34 +21,53 @@
         <div class="crm-label">{ts}Employer{/ts}</div>
         <div class="crm-content crm-contact-current_employer">
           {if !empty($current_employer_id)}
-          <a href="{crmURL p='civicrm/contact/view' q="reset=1&cid=`$current_employer_id`"}" title="{ts}view current employer{/ts}">{$current_employer}</a>
+          <a href="{crmURL p='civicrm/contact/view' q="reset=1&cid=`$current_employer_id`"}" title="{ts escape='htmlattribute'}view current employer{/ts}">{$current_employer|escape}</a>
           {/if}
         </div>
       </div>
       <div class="crm-summary-row">
         <div class="crm-label">{ts}Job Title{/ts}</div>
-        <div class="crm-content crm-contact-job_title">{$job_title}</div>
+        <div class="crm-content crm-contact-job_title">{$job_title|escape}</div>
       </div>
       {/if}
       <div class="crm-summary-row">
         <div class="crm-label">{ts}Nickname{/ts}</div>
-        <div class="crm-content crm-contact-nick_name">{$nick_name}</div>
+        <div class="crm-content crm-contact-nick_name">{$nick_name|escape}</div>
       </div>
 
       {if $contact_type eq 'Organization'}
       <div class="crm-summary-row">
         <div class="crm-label">{ts}Legal Name{/ts}</div>
-        <div class="crm-content crm-contact-legal_name">{$legal_name}</div>
+        <div class="crm-content crm-contact-legal_name">{$legal_name|escape}</div>
       </div>
       <div class="crm-summary-row">
         <div class="crm-label">{ts}SIC Code{/ts}</div>
-        <div class="crm-content crm-contact-sic_code">{$sic_code}</div>
+        <div class="crm-content crm-contact-sic_code">{$sic_code|escape}</div>
       </div>
       {/if}
+
       <div class="crm-summary-row">
-        <div class="crm-label">{ts}Source{/ts}</div>
-        <div class="crm-content crm-contact_source">{$source}</div>
+        <div class="crm-label">{ts}Contact Source{/ts}</div>
+        <div class="crm-content crm-contact_source">{$source|escape}</div>
       </div>
+
+      {if ($contact_type eq 'Organization') OR ($contact_type eq 'Household')}
+        {if !empty($is_deceased)}
+          {if !empty($deceased_date)}
+          <div class="crm-summary-row">
+            <div class="crm-label">{ts}Date Closed{/ts}</div>
+            <div class="crm-content crm-contact-deceased_date_display">
+                {$deceased_date|crmDate:$date_format}
+            </div>
+          </div>
+          {else}
+          <div class="crm-summary-row">
+            <div class="crm-label"></div>
+            <div class="crm-content crm-contact-deceased_message"><span class="font-red upper">{ts 1=$contact_type}%1 is Closed{/ts}</span></div>
+          </div>
+          {/if}
+        {/if}
+      {/if}
 
     </div>
 </div>

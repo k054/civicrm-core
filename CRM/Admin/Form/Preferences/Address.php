@@ -1,111 +1,49 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.7                                                |
- +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2016                                |
- +--------------------------------------------------------------------+
- | This file is a part of CiviCRM.                                    |
+ | Copyright CiviCRM LLC. All rights reserved.                        |
  |                                                                    |
- | CiviCRM is free software; you can copy, modify, and distribute it  |
- | under the terms of the GNU Affero General Public License           |
- | Version 3, 19 November 2007 and the CiviCRM Licensing Exception.   |
- |                                                                    |
- | CiviCRM is distributed in the hope that it will be useful, but     |
- | WITHOUT ANY WARRANTY; without even the implied warranty of         |
- | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.               |
- | See the GNU Affero General Public License for more details.        |
- |                                                                    |
- | You should have received a copy of the GNU Affero General Public   |
- | License and the CiviCRM Licensing Exception along                  |
- | with this program; if not, contact CiviCRM LLC                     |
- | at info[AT]civicrm[DOT]org. If you have questions about the        |
- | GNU Affero General Public License or the licensing of CiviCRM,     |
- | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
+ | This work is published under the GNU AGPLv3 license with some      |
+ | permitted exceptions and without any warranty. For full license    |
+ | and copyright information, see https://civicrm.org/licensing       |
  +--------------------------------------------------------------------+
  */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2016
+ * @copyright CiviCRM LLC https://civicrm.org/licensing
  */
 
 /**
  * This class generates form components for Address Section.
  */
-class CRM_Admin_Form_Preferences_Address extends CRM_Admin_Form_Preferences {
+class CRM_Admin_Form_Preferences_Address extends CRM_Admin_Form_Generic {
+
   public function preProcess() {
-
-    CRM_Utils_System::setTitle(ts('Settings - Addresses'));
-
-    // Address Standardization
-    $addrProviders = array(
-      '' => '- select -',
-    ) + CRM_Core_SelectValues::addressProvider();
-
-    $this->_varNames = array(
-      CRM_Core_BAO_Setting::SYSTEM_PREFERENCES_NAME => array(
-        'address_options' => array(
-          'html_type' => 'checkboxes',
-          'title' => ts('Address Fields'),
-          'weight' => 1,
-        ),
-        'address_format' => array(
-          'html_type' => 'textarea',
-          'title' => ts('Display Format'),
-          'description' => NULL,
-          'weight' => 2,
-        ),
-        'mailing_format' => array(
-          'html_type' => 'textarea',
-          'title' => ts('Mailing Label Format'),
-          'description' => NULL,
-          'weight' => 3,
-        ),
-      ),
-      CRM_Core_BAO_Setting::ADDRESS_STANDARDIZATION_PREFERENCES_NAME => array(
-        'address_standardization_provider' => array(
-          'html_type' => 'select',
-          'title' => ts('Provider'),
-          'option_values' => $addrProviders,
-          'weight' => 4,
-        ),
-        'address_standardization_userid' => array(
-          'html_type' => 'text',
-          'title' => ts('User ID'),
-          'description' => NULL,
-          'weight' => 5,
-        ),
-        'address_standardization_url' => array(
-          'html_type' => 'text',
-          'title' => ts('Web Service URL'),
-          'description' => NULL,
-          'weight' => 6,
-        ),
-      ),
-    );
-
     parent::preProcess();
-  }
-
-  /**
-   * @return array
-   */
-  public function setDefaultValues() {
-    $defaults = array();
-    $defaults['address_standardization_provider'] = $this->_config->address_standardization_provider;
-    $defaults['address_standardization_userid'] = $this->_config->address_standardization_userid;
-    $defaults['address_standardization_url'] = $this->_config->address_standardization_url;
-
-    $this->addressSequence = isset($newSequence) ? $newSequence : "";
-
-    $defaults['address_format'] = $this->_config->address_format;
-    $defaults['mailing_format'] = $this->_config->mailing_format;
-
-    parent::cbsDefaultValues($defaults);
-
-    return $defaults;
+    $this->sections = [
+      'display' => [
+        'title' => ts('Address Display'),
+        'icon' => 'fa-address-card',
+        'weight' => 10,
+      ],
+      'labels' => [
+        'title' => ts('Mailing Labels'),
+        'icon' => 'fa-envelopes-bulk',
+        'weight' => 20,
+      ],
+      'edit' => [
+        'title' => ts('Address Editing'),
+        'icon' => 'fa-address-book',
+        'weight' => 30,
+      ],
+      'standardization' => [
+        'title' => ts('Address Standardization'),
+        'icon' => 'fa-map-location-dot',
+        'weight' => 40,
+      ],
+    ];
   }
 
   /**
@@ -114,7 +52,7 @@ class CRM_Admin_Form_Preferences_Address extends CRM_Admin_Form_Preferences {
   public function buildQuickForm() {
     $this->applyFilter('__ALL__', 'trim');
 
-    $this->addFormRule(array('CRM_Admin_Form_Preferences_Address', 'formRule'));
+    $this->addFormRule(['CRM_Admin_Form_Preferences_Address', 'formRule']);
 
     //get the tokens for Mailing Label field
     $tokens = CRM_Core_SelectValues::contactTokens();
@@ -124,25 +62,21 @@ class CRM_Admin_Form_Preferences_Address extends CRM_Admin_Form_Preferences {
   }
 
   /**
-   * @param $fields
+   * @param array $fields
    *
    * @return bool
    */
   public static function formRule($fields) {
     $p = $fields['address_standardization_provider'];
-    $u = $fields['address_standardization_userid'];
-    $w = $fields['address_standardization_url'];
+    $u = $fields['address_standardization_key'];
+    $w = $fields['address_standardization_secret'];
 
     // make sure that there is a value for all of them
     // if any of them are set
     if ($p || $u || $w) {
-      if (!CRM_Utils_System::checkPHPVersion(5, FALSE)) {
-        $errors['_qf_default'] = ts('Address Standardization features require PHP version 5 or greater.');
-        return $errors;
-      }
 
       if (!($p && $u && $w)) {
-        $errors['_qf_default'] = ts('You must provide values for all three Address Standarization fields.');
+        $errors['_qf_default'] = ts('You must provide values for all three Address Standardization fields.');
         return $errors;
       }
     }
@@ -158,29 +92,31 @@ class CRM_Admin_Form_Preferences_Address extends CRM_Admin_Form_Preferences {
       return;
     }
 
-    $this->_params = $this->controller->exportValues($this->_name);
+    $params = $this->controller->exportValues($this->_name);
+    $addressOptions = CRM_Core_OptionGroup::values('address_options', TRUE);
 
     // check if county option has been set
-    $options = CRM_Core_OptionGroup::values('address_options', FALSE, FALSE, TRUE);
-    foreach ($options as $key => $title) {
-      if ($title == ts('County')) {
-        // check if the $key is present in $this->_params
-        if (isset($this->_params['address_options']) &&
-          !empty($this->_params['address_options'][$key])
-        ) {
-          // print a status message to the user if county table seems small
-          $countyCount = CRM_Core_DAO::singleValueQuery("SELECT count(*) FROM civicrm_county");
-          if ($countyCount < 10) {
-            CRM_Core_Session::setStatus(ts('You have enabled the County option. Please ensure you populate the county table in your CiviCRM Database. You can find extensions to populate counties in the <a %1>CiviCRM Extensions Directory</a>.', array(1 => 'href="' . CRM_Utils_System::url('civicrm/admin/extensions', array('reset' => 1), TRUE, 'extensions-addnew') . '"')),
-              ts('Populate counties'),
-              "info"
-            );
-          }
-        }
+    if (!empty($params['address_options'][$addressOptions['County']])) {
+      $countyCount = CRM_Core_DAO::singleValueQuery("SELECT count(*) FROM civicrm_county");
+      if ($countyCount < 10) {
+        CRM_Core_Session::setStatus(ts('You have enabled the County option. Please ensure you populate the county table in your CiviCRM Database. You can find extensions to populate counties in the <a %1>CiviCRM Extensions Directory</a>.', [1 => 'href="' . CRM_Utils_System::url('civicrm/admin/extensions', ['reset' => 1], TRUE, 'extensions-addnew') . '"']),
+          ts('Populate counties'),
+          "info"
+        );
       }
     }
 
-    $this->postProcessCommon();
+    // check that locale supports address parsing
+    if (
+      !empty($params['address_options'][$addressOptions['Street Address Parsing']]) &&
+      !CRM_Core_BAO_Address::isSupportedParsingLocale()
+    ) {
+      $config = CRM_Core_Config::singleton();
+      $locale = $config->lcMessages;
+      CRM_Core_Session::setStatus(ts('Default locale (%1) does not support street parsing. en_US locale will be used instead.', [1 => $locale]), ts('Unsupported Locale'), 'alert');
+    }
+
+    parent::postProcess();
   }
 
 }

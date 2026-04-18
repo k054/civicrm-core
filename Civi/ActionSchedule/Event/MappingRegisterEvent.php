@@ -2,28 +2,30 @@
 namespace Civi\ActionSchedule\Event;
 
 use Civi\ActionSchedule\MappingInterface;
-use Symfony\Component\EventDispatcher\Event;
+use Civi\Core\Event\GenericHookEvent;
 
 /**
  * Class ActionScheduleEvent
  * @package Civi\ActionSchedule\Event
  *
  * Register any available mappings.
+ *
+ * Event name: 'civi.actionSchedule.getMappings'
  */
-class MappingRegisterEvent extends Event {
+class MappingRegisterEvent extends GenericHookEvent {
 
   /**
    * @var array
    *   Array(scalar $id => Mapping $mapping).
    */
-  protected $mappings = array();
+  protected $mappings = [];
 
   /**
    * Register a new mapping.
    *
-   * @param MappingInterface $mapping
+   * @param \Civi\ActionSchedule\MappingInterface $mapping
    *   The new mapping.
-   * @return $this
+   * @return MappingRegisterEvent
    */
   public function register(MappingInterface $mapping) {
     $this->mappings[$mapping->getId()] = $mapping;

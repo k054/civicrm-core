@@ -4,6 +4,7 @@
  * Generate files used during testing.
  */
 class CRM_Core_CodeGen_Test extends CRM_Core_CodeGen_BaseTask {
+
   public function run() {
     $this->generateCiviTestTruncate();
   }
@@ -17,10 +18,10 @@ class CRM_Core_CodeGen_Test extends CRM_Core_CodeGen_BaseTask {
         <dataset>';
     $tbls = array_keys($this->tables);
     foreach ($tbls as $d => $t) {
-      $truncate = $truncate . "\n  <$t />\n";
+      $truncate .= "\n  <$t />\n";
     }
 
-    $truncate = $truncate . "</dataset>\n";
+    $truncate .= "</dataset>\n";
     file_put_contents($this->config->sqlCodePath . "../tests/phpunit/CiviTest/truncate.xml", $truncate);
     unset($truncate);
   }

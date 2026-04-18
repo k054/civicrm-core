@@ -1,37 +1,21 @@
 <?php
 /*
  +--------------------------------------------------------------------+
- | CiviCRM version 4.7                                                |
- +--------------------------------------------------------------------+
- | Copyright CiviCRM LLC (c) 2004-2016                                |
- +--------------------------------------------------------------------+
- | This file is a part of CiviCRM.                                    |
+ | Copyright CiviCRM LLC. All rights reserved.                        |
  |                                                                    |
- | CiviCRM is free software; you can copy, modify, and distribute it  |
- | under the terms of the GNU Affero General Public License           |
- | Version 3, 19 November 2007 and the CiviCRM Licensing Exception.   |
- |                                                                    |
- | CiviCRM is distributed in the hope that it will be useful, but     |
- | WITHOUT ANY WARRANTY; without even the implied warranty of         |
- | MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.               |
- | See the GNU Affero General Public License for more details.        |
- |                                                                    |
- | You should have received a copy of the GNU Affero General Public   |
- | License and the CiviCRM Licensing Exception along                  |
- | with this program; if not, contact CiviCRM LLC                     |
- | at info[AT]civicrm[DOT]org. If you have questions about the        |
- | GNU Affero General Public License or the licensing of CiviCRM,     |
- | see the CiviCRM license FAQ at http://civicrm.org/licensing        |
+ | This work is published under the GNU AGPLv3 license with some      |
+ | permitted exceptions and without any warranty. For full license    |
+ | and copyright information, see https://civicrm.org/licensing       |
  +--------------------------------------------------------------------+
  */
 
 /**
  *
  * @package CRM
- * @copyright CiviCRM LLC (c) 2004-2016
+ * @copyright CiviCRM LLC https://civicrm.org/licensing
  */
 class CiviContributeProcessor {
-  static $_paypalParamsMapper = array(
+  public static $_paypalParamsMapper = array(
     //category    => array(paypal_param    => civicrm_field);
     'contact' => array(
       'salutation' => 'prefix_id',
@@ -72,10 +56,13 @@ class CiviContributeProcessor {
     ),
   );
 
-  static $_csvParamsMapper = array(
-    // Note: if csv header is not present in the mapper, header itself
-    // is considered as a civicrm field.
-    //category    => array(csv_header      => civicrm_field);
+  /**
+   * Note: if csv header is not present in the mapper, header itself
+   * is considered as a civicrm field.
+   * category    => array(csv_header      => civicrm_field);
+   * @var array
+   */
+  public static $_csvParamsMapper = array(
     'contact' => array(
       'first_name' => 'first_name',
       'last_name' => 'last_name',
@@ -188,10 +175,15 @@ class CiviContributeProcessor {
             $params['transaction']['is_test'] = 0;
           }
 
-          if (self::processAPIContribution($params)) {
-            CRM_Core_Error::debug_log_message("Processed - {$trxnDetails['email']}, {$trxnDetails['amt']}, {$value} ..<p>", TRUE);
+          try {
+            if (self::processAPIContribution($params)) {
+              CRM_Core_Error::debug_log_message("Processed - {$trxnDetails['email']}, {$trxnDetails['amt']}, {$value} ..<p>", TRUE);
+            }
+            else {
+              CRM_Core_Error::debug_log_message("Skipped - {$trxnDetails['email']}, {$trxnDetails['amt']}, {$value} ..<p>", TRUE);
+            }
           }
-          else {
+          catch (CRM_Core_Exception $e) {
             CRM_Core_Error::debug_log_message("Skipped - {$trxnDetails['email']}, {$trxnDetails['amt']}, {$value} ..<p>", TRUE);
           }
         }
@@ -203,48 +195,6 @@ class CiviContributeProcessor {
         $args['enddate'] = $end_date;
       }
     } while ($result['l_errorcode0'] == '11002');
-  }
-
-  public static function csv() {
-    $csvFile = '/home/deepak/Desktop/crm-4247.csv';
-    $delimiter = ";";
-    $row = 1;
-
-    $handle = fopen($csvFile, "r");
-    if (!$handle) {
-      CRM_Core_Error::fatal("Can't locate csv file.");
-    }
-
-    require_once "CRM/Contribute/BAO/Contribution/Utils.php";
-    while (($data = fgetcsv($handle, 1000, $delimiter)) !== FALSE) {
-      if ($row !== 1) {
-        $data['header'] = $header;
-        $params = self::formatAPIParams($data,
-          self::$_csvParamsMapper,
-          'csv'
-        );
-        if (self::processAPIContribution($params)) {
-          CRM_Core_Error::debug_log_message("Processed - line $row of csv file .. {$params['email']}, {$params['transaction']['total_amount']}, {$params['transaction']['trxn_id']} ..<p>", TRUE);
-        }
-        else {
-          CRM_Core_Error::debug_log_message("Skipped - line $row of csv file .. {$params['email']}, {$params['transaction']['total_amount']}, {$params['transaction']['trxn_id']} ..<p>", TRUE);
-        }
-
-        // clean up memory from dao's
-        CRM_Core_DAO::freeResult();
-      }
-      else {
-        // we assuming - first row is always the header line
-        $header = $data;
-        CRM_Core_Error::debug_log_message("Considering first row ( line $row ) as HEADER ..<p>", TRUE);
-
-        if (empty($header)) {
-          CRM_Core_Error::fatal("Header is empty.");
-        }
-      }
-      $row++;
-    }
-    fclose($handle);
   }
 
   public static function process() {
@@ -262,7 +212,7 @@ class CiviContributeProcessor {
           CRM_Core_DAO::$_nullObject, FALSE, 0, 'REQUEST'
         );
         if ($start < $end) {
-          CRM_Core_Error::fatal("Start offset can't be less than End offset.");
+          throw new CRM_Core_Exception("Start offset can't be less than End offset.");
         }
 
         $start = date('Y-m-d', time() - $start * 24 * 60 * 60) . 'T00:00:00.00Z';
@@ -361,7 +311,7 @@ class CiviContributeProcessor {
         $params += $transaction;
       }
 
-      CRM_Contribute_BAO_Contribution_Utils::_fillCommonParams($params, $type);
+      self::_fillCommonParams($params, $type);
 
       return $params;
     }
@@ -391,7 +341,7 @@ class CiviContributeProcessor {
         $params += $transaction;
       }
 
-      CRM_Contribute_BAO_Contribution_Utils::_fillCommonParams($params, $type);
+      self::_fillCommonParams($params, $type);
 
       return $params;
     }
@@ -399,6 +349,10 @@ class CiviContributeProcessor {
   }
 
   /**
+   * @deprecated function.
+   *
+   * This function has probably been defunct for quite a long time.
+   *
    * @param array $params
    *
    * @return bool
@@ -408,35 +362,18 @@ class CiviContributeProcessor {
       return FALSE;
     }
 
-    // add contact using dedupe rule
-    $dedupeParams = CRM_Dedupe_Finder::formatParams($params, 'Individual');
-    $dedupeParams['check_permission'] = FALSE;
-    $dupeIds = CRM_Dedupe_Finder::dupesByParams($dedupeParams, 'Individual');
-    // if we find more than one contact, use the first one
-    if (!empty($dupeIds[0])) {
-      $params['contact_id'] = $dupeIds[0];
-    }
-    $contact = CRM_Contact_BAO_Contact::create($params);
-    if (!$contact->id) {
-      return FALSE;
-    }
+    $params['contact_id'] = CRM_Contact_BAO_Contact::getFirstDuplicateContact($params, 'Individual', 'Unsupervised', array(), FALSE);
+
+    $contact = civicrm_api3('Contact', 'create', $params);
 
     // only pass transaction params to contribution::create, if available
     if (array_key_exists('transaction', $params)) {
       $params = $params['transaction'];
-      $params['contact_id'] = $contact->id;
+      $params['contact_id'] = $contact['id'];
     }
 
-    // handle contribution custom data
-    $customFields = CRM_Core_BAO_CustomField::getFields('Contribution',
-      FALSE,
-      FALSE,
-      CRM_Utils_Array::value('financial_type_id',
-        $params
-      )
-    );
     $params['custom'] = CRM_Core_BAO_CustomField::postProcess($params,
-      CRM_Utils_Array::value('id', $params, NULL),
+      $params['id'] ?? NULL,
       'Contribution'
     );
     // create contribution
@@ -457,7 +394,7 @@ class CiviContributeProcessor {
       // errors due to invoice ID. See:
       // ./CRM/Core/Payment/PayPalIPN.php:200
       if ($recurring->id) {
-        $params['invoice_id'] = md5(uniqid(rand(), TRUE));
+        $params['invoice_id'] = bin2hex(random_bytes(16));
       }
 
       $recurring->copyValues($params);
@@ -470,11 +407,77 @@ class CiviContributeProcessor {
       }
     }
 
-    $contribution = &CRM_Contribute_BAO_Contribution::create($params,
-      CRM_Core_DAO::$_nullArray
+    $contribution = CRM_Contribute_BAO_Contribution::create($params);
+    return (bool) $contribution->id;
+  }
+
+  /**
+   * @param array $params
+   * @param string $type
+   *
+   * @return bool
+   */
+  public static function _fillCommonParams(&$params, $type = 'paypal') {
+    if (array_key_exists('transaction', $params)) {
+      $transaction = &$params['transaction'];
+    }
+    else {
+      $transaction = &$params;
+    }
+
+    $params['contact_type'] = 'Individual';
+
+    $billingLocTypeId = CRM_Core_DAO::getFieldValue('CRM_Core_DAO_LocationType', 'Billing', 'id', 'name');
+    if (!$billingLocTypeId) {
+      $billingLocTypeId = 1;
+    }
+    if (!CRM_Utils_System::isNull($params['address'])) {
+      $params['address'][1]['is_primary'] = 1;
+      $params['address'][1]['location_type_id'] = $billingLocTypeId;
+    }
+    if (!CRM_Utils_System::isNull($params['email'])) {
+      $params['email'] = [
+        1 => [
+          'email' => $params['email'],
+          'location_type_id' => $billingLocTypeId,
+        ],
+      ];
+    }
+
+    if (isset($transaction['trxn_id'])) {
+      // set error message if transaction has already been processed.
+      $contribution = new CRM_Contribute_DAO_Contribution();
+      $contribution->trxn_id = $transaction['trxn_id'];
+      if ($contribution->find(TRUE)) {
+        $params['error'][] = ts('transaction already processed.');
+      }
+    }
+    else {
+      // generate a new transaction id, if not already exist
+      $transaction['trxn_id'] = bin2hex(random_bytes(16));
+    }
+
+    if (!isset($transaction['financial_type_id'])) {
+      $contributionTypes = array_keys(CRM_Contribute_PseudoConstant::financialType());
+      $transaction['financial_type_id'] = $contributionTypes[0];
+    }
+
+    if (($type == 'paypal') && (!isset($transaction['net_amount']))) {
+      $transaction['net_amount'] = $transaction['total_amount'] - ($transaction['fee_amount'] ?? 0);
+    }
+
+    if (!isset($transaction['invoice_id'])) {
+      $transaction['invoice_id'] = $transaction['trxn_id'];
+    }
+
+    $source = ts('ContributionProcessor: %1 API',
+      [1 => ucfirst($type)]
     );
-    if (!$contribution->id) {
-      return FALSE;
+    if (isset($transaction['source'])) {
+      $transaction['source'] = $source . ':: ' . $transaction['source'];
+    }
+    else {
+      $transaction['source'] = $source;
     }
 
     return TRUE;
@@ -486,7 +489,7 @@ class CiviContributeProcessor {
 session_start();
 require_once '../civicrm.config.php';
 require_once 'CRM/Core/Config.php';
-$config = CRM_Core_Config::singleton();
+CRM_Core_Config::singleton();
 
 CRM_Utils_System::authenticateScript(TRUE);
 
@@ -496,10 +499,7 @@ CRM_Core_Error::debug_log_message('ContributionProcessor.php');
 $lock = Civi::lockManager()->acquire('worker.contribute.CiviContributeProcessor');
 
 if ($lock->isAcquired()) {
-  // try to unset any time limits
-  if (!ini_get('safe_mode')) {
-    set_time_limit(0);
-  }
+  set_time_limit(0);
 
   CiviContributeProcessor::process();
 }

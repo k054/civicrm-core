@@ -47,6 +47,7 @@ describe('crmMailingRadioDate', function() {
 
       model.the_date = '';
       $rootScope.$digest();
+      $timeout.flush();
       expect($rootScope.myForm.$valid).toBe(true);
       expect(element.find('.radio-now').prop('checked')).toBe(true);
       expect(element.find('.radio-at').prop('checked')).toBe(false);
@@ -55,6 +56,7 @@ describe('crmMailingRadioDate', function() {
 
       model.the_date = ' ';
       $rootScope.$digest();
+      $timeout.flush();
       expect($rootScope.myForm.$valid).toBe(false);
       expect(element.find('.radio-now').prop('checked')).toBe(false);
       expect(element.find('.radio-at').prop('checked')).toBe(true);
@@ -63,6 +65,7 @@ describe('crmMailingRadioDate', function() {
 
       model.the_date = '2014-01-01';
       $rootScope.$digest();
+      $timeout.flush();
       expect($rootScope.myForm.$valid).toBe(false);
       expect(element.find('.radio-now').prop('checked')).toBe(false);
       expect(element.find('.radio-at').prop('checked')).toBe(true);
@@ -72,6 +75,7 @@ describe('crmMailingRadioDate', function() {
 
       model.the_date = '02:03:00';
       $rootScope.$digest();
+      $timeout.flush();
       expect($rootScope.myForm.$valid).toBe(false);
       expect(element.find('.radio-now').prop('checked')).toBe(false);
       expect(element.find('.radio-at').prop('checked')).toBe(true);
@@ -87,24 +91,38 @@ describe('crmMailingRadioDate', function() {
       expect(element.find('.crm-form-time').timeEntry('getTime').getMinutes()).toBe(3);
 
       var now = new Date();
-      var month = '' + (now.getMonth() + 1);
+      var month = '';
+      var day = '';
+      if (now.getMonth() == 12) {
+        month = '1';
+      } else {
+        month = month + (now.getMonth() + 1);
+      }
+      if (now.getDate() >= 28) {
+        day = '1';
+      } else {
+        day = day + (now.getDate() + 1);
+      }
       var year = (now.getFullYear() + 1);
+      if (day.length < 2) day = '0' + day;
       if (month.length < 2) month = '0' + month;
-      var day = "01";
       var minutes = "30";
       var hours = "09";
       var datenow = [year, month, day].join('-');
       var time = [hours, minutes, "00"].join(':');
       var currentDate = datenow + ' ' + time;
-      var ndate = new Date(datenow);
+      // Using datenow in the constructor here converts to local time. If not
+      // running on GMT (or east) then comparison to toDateString below fails.
+      // Also use month-1 because...javascript.
+      var ndate = new Date(year, month-1, day, 0, 0, 0);
       model.the_date = currentDate;
 
+      $timeout.flush();
       $rootScope.$digest();
       expect($rootScope.myForm.$valid).toBe(true);
       expect(element.find('.radio-now').prop('checked')).toBe(false);
       expect(element.find('.radio-at').prop('checked')).toBe(true);
-      // expect(element.find('.crm-form-date').datepicker('getDate').toDateString()).toEqual(ndate.toDateString());
-      expect(element.find('.crm-form-date').datepicker('getDate').getUTCDate()).toEqual(ndate.getUTCDate());
+      expect(element.find('.crm-form-date').datepicker('getDate').toDateString()).toEqual(ndate.toDateString());
       expect(element.find('.crm-hidden-date').val()).toEqual(currentDate);
     });
 
@@ -113,6 +131,7 @@ describe('crmMailingRadioDate', function() {
 
       model.the_date = '';
       $rootScope.$digest();
+      $timeout.flush();
       expect($rootScope.myForm.$valid).toBe(true);
       expect(element.find('.radio-now').prop('checked')).toBe(true);
       expect(element.find('.radio-at').prop('checked')).toBe(false);
@@ -120,6 +139,7 @@ describe('crmMailingRadioDate', function() {
       element.find('.radio-now').click().trigger('click').trigger('change');
       element.find('.crm-form-date').datepicker('setDate', $.datepicker.parseDate('yy-mm-dd', '2014-01-03')).trigger('change');
       $rootScope.$digest();
+      $timeout.flush();
       expect(model.the_date).toBe('2014-01-03');
       expect($rootScope.myForm.$valid).toBe(false);
       expect(element.find('.radio-now').prop('checked')).toBe(false);
@@ -133,6 +153,7 @@ describe('crmMailingRadioDate', function() {
       expect(element.find('.radio-at').prop('checked')).toBe(true);
 
       element.find('.crm-form-date').datepicker('setDate', '').trigger('change');
+      $timeout.flush();
       $rootScope.$digest();
       expect(model.the_date).toBe('04:05:00');
       expect($rootScope.myForm.$valid).toBe(false);
@@ -140,6 +161,7 @@ describe('crmMailingRadioDate', function() {
       expect(element.find('.radio-at').prop('checked')).toBe(true);
 
       element.find('.radio-now').click().trigger('click').trigger('change');
+      $timeout.flush();
       $rootScope.$digest();
       expect(model.the_date).toBe(null);
       expect($rootScope.myForm.$valid).toBe(true);
